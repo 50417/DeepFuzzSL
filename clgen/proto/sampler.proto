@@ -1,0 +1,49 @@
+// The file defines the protos for specificying CLgen samplers.
+//
+// Please ignore the "optional" proto syntax, ALL FIELDS MUST BE SET.
+// This is to ensure consistent hashing of proto instances to a unique checksum,
+// as default values are ommitted in serialized protos. Unfortunately, this
+// means setting a value to any new field in all of the proto files across this
+// entire repository (and any which are not tracked in this repo).
+
+syntax = "proto2";
+package clgen;
+
+option java_package = "deeplearning.clgen";
+
+// The specification of a CLgen sampler.
+message Sampler {
+  // The initial text to the seed the language model with. Each sample will
+  // begin with this text.
+  optional string start_text = 1;
+  // The sampling batch size.
+  // TODO(cec): Always sample with max batch size.
+  optional int32 batch_size = 2;
+  // The sampling temperature. Must be >= 0. A recommended starting value is
+  // 1000000 (i.e. 1.0 in real values).
+  optional int32 temperature_micros = 3;
+  // The criteria that determine when to terminate a sample, in the order in
+  // which they will be executed. Duplicates are allowed, for example if you
+  // would like to have symmetrical token depth counters for two pairs of
+  // tokens.
+  repeated SampleTerminationCriterion termination_criteria = 4;
+}
+
+// Criteria used for determining when to stop sampling.
+message SampleTerminationCriterion {
+  oneof criterion {
+    MaxTokenLength maxlen = 1;
+    SymmetricalTokenDepth symtok = 2;
+  }
+}
+
+message MaxTokenLength {
+  // The maximum length of a sample, as a number of tokens. The length of the
+  // Sampler.start_text counts towards this total.
+  optional int32 maximum_tokens_in_sample = 1;
+}
+
+message SymmetricalTokenDepth {
+  optional string depth_increase_token = 1;
+  optional string depth_decrease_token = 2;
+}

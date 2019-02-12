@@ -1,0 +1,30 @@
+// The file defines the protos for describing CLgen instances.
+
+syntax = "proto2";
+package clgen;
+
+import "deeplearning/clgen/proto/model.proto";
+import "deeplearning/clgen/proto/sampler.proto";
+
+// A CLgen instance encapsulates all of the settings for training and sampling
+// a language model.
+message Instance {
+  // The path to the clgen working directory. This directory stores persistent
+  // caches files, including the corpus, model checkpoints, and sampler outputs.
+  // If not provided, the default value of $HOME/.cache/clgen is used.
+  optional string working_dir = 1;
+  // The language model specification. Either the full description of a model,
+  // or the path to a pretrained_model, as created by --export_tf_model option
+  // of clgen.
+  oneof model_specification {
+    Model model = 2;
+    string pretrained_model = 4;
+  }
+  // The sampler specification.
+  optional Sampler sampler = 3;
+}
+
+// A collection of instances.
+message Instances {
+  repeated Instance instance = 1;
+}
