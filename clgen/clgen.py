@@ -28,12 +28,12 @@ from absl import app
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import errors
-from deeplearning.clgen import samplers
-from deeplearning.clgen.models import models
-from deeplearning.clgen.models import pretrained
-from deeplearning.clgen.proto import clgen_pb2
-from deeplearning.clgen.proto import model_pb2
+import errors
+import samplers
+from models import models
+from models import pretrained
+from proto import clgen_pb2
+from proto import model_pb2
 from labm8 import pbutil
 from labm8 import prof
 
@@ -42,7 +42,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
     'config', None,
-    'Path to a clgen.Instance proto file.')
+    'Path to a Instance proto file.')
 flags.DEFINE_integer(
     'min_samples', -1,
     'The minimum number of samples to make.')

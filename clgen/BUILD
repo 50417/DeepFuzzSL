@@ -18,7 +18,7 @@ exports_files([
 py_library(
     name = "cache",
     srcs = ["cache.py"],
-    visibility = ["//deeplearning/clgen:__subpackages__"],
+    visibility = ["//clgen:__subpackages__"],
     deps = [
         "//labm8:cache",
         "//labm8:fs",
@@ -35,13 +35,18 @@ py_binary(
     deps = [
         ":errors",
         ":samplers",
-        "//deeplearning/clgen/models",
-        "//deeplearning/clgen/models:pretrained",
-        "//deeplearning/clgen/proto:clgen_py_pb2",
+        "//clgen/models",
+        "//clgen/models:pretrained",
+        "//clgen/proto:clgen_py_pb2",
         "//labm8:pbutil",
         "//labm8:prof",
         "//third_party/py/absl",
     ],
+)
+py_library(
+    name = "errors",
+    srcs = ["errors.py"],
+    visibility = ["//clgen:__subpackages__"],
 )
 
 py3_image(
@@ -52,36 +57,15 @@ py3_image(
     deps = [
         ":errors",
         ":samplers",
-        "//deeplearning/clgen/models",
-        "//deeplearning/clgen/proto:clgen_py_pb2",
+        "//clgen/models",
+        "//clgen/proto:clgen_py_pb2",
         "//labm8:pbutil",
         "//labm8:prof",
         "//third_party/py/absl",
     ],
 )
 
-py_test(
-    name = "clgen_test",
-    size = "enormous",
-    srcs = ["clgen_test.py"],
-    data = [
-        "//deeplearning/clgen/tests/data:pico",
-        "//deeplearning/clgen/tests/data:tiny",
-        "//deeplearning/clgen/tests/data/tiny",
-    ],
-    default_python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [
-        ":clgen",
-        "//deeplearning/clgen:conftest",
-        "//deeplearning/clgen/proto:clgen_py_pb2",
-        "//labm8:fs",
-        "//labm8:pbutil",
-        "//labm8:tar",
-        "//third_party/py/absl",
-        "//third_party/py/pytest",
-    ],
-)
+
 
 py_library(
     name = "conftest",
@@ -89,21 +73,16 @@ py_library(
     srcs = ["conftest.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//deeplearning/clgen/proto:clgen_py_pb2",
-        "//deeplearning/clgen/proto:corpus_py_pb2",
-        "//deeplearning/clgen/proto:model_py_pb2",
-        "//deeplearning/clgen/proto:sampler_py_pb2",
+        "//clgen/proto:clgen_py_pb2",
+        "//clgen/proto:corpus_py_pb2",
+        "//clgen/proto:model_py_pb2",
+        "//clgen/proto:sampler_py_pb2",
         "//labm8:pbutil",
         "//third_party/py/absl",
         "//third_party/py/pytest",
     ],
 )
 
-py_library(
-    name = "errors",
-    srcs = ["errors.py"],
-    visibility = ["//deeplearning/clgen:__subpackages__"],
-)
 
 py_binary(
     name = "ls_models",
@@ -112,8 +91,8 @@ py_binary(
     srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
-        "//deeplearning/clgen/models",
-        "//deeplearning/clgen/proto:internal_py_pb2",
+        "//clgen/models",
+        "//clgen/proto:internal_py_pb2",
         "//labm8:pbutil",
         "//third_party/py/absl",
     ],
@@ -126,8 +105,8 @@ py_library(
     deps = [
         ":errors",
         ":samplers",
-        "//deeplearning/clgen/models:pretrained",
-        "//deeplearning/clgen/proto:clgen_py_pb2",
+        "//clgen/models:pretrained",
+        "//clgen/proto:clgen_py_pb2",
         "//labm8:pbutil",
         "//third_party/py/absl",
     ],
@@ -140,49 +119,26 @@ py_library(
     deps = [
         ":cache",
         ":errors",
-        "//deeplearning/clgen/corpuses:atomizers",
-        "//deeplearning/clgen/proto:sampler_py_pb2",
+        "//clgen/corpuses:atomizers",
+        "//clgen/proto:sampler_py_pb2",
         "//labm8:crypto",
         "//labm8:pbutil",
         "//third_party/py/absl",
     ],
 )
 
-py_test(
-    name = "samplers_test",
-    srcs = ["samplers_test.py"],
-    default_python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [
-        ":conftest",
-        ":errors",
-        ":samplers",
-        "//third_party/py/absl",
-        "//third_party/py/pytest",
-    ],
-)
+
 
 py_library(
     name = "telemetry",
     srcs = ["telemetry.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//deeplearning/clgen/proto:telemetry_py_pb2",
+        "//clgen/proto:telemetry_py_pb2",
         "//labm8:jsonutil",
         "//labm8:labdate",
         "//labm8:pbutil",
         "//third_party/py/absl",
     ],
 )
-
-py_test(
-    name = "telemetry_test",
-    srcs = ["telemetry_test.py"],
-    default_python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [
-        ":telemetry",
-        "//third_party/py/absl",
-        "//third_party/py/pytest",
-    ],
-)
+\

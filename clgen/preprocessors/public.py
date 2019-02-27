@@ -3,7 +3,7 @@ import typing
 
 from absl import flags
 
-from deeplearning.clgen import errors
+import errors
 
 
 FLAGS = flags.FLAGS

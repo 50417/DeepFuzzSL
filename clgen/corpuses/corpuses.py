@@ -16,13 +16,13 @@ from absl import flags
 from absl import logging
 from sqlalchemy.sql.expression import func
 
-from deeplearning.clgen import cache
-from deeplearning.clgen import errors
-from deeplearning.clgen.corpuses import atomizers
-from deeplearning.clgen.corpuses import encoded
-from deeplearning.clgen.corpuses import preprocessed
-from deeplearning.clgen.preprocessors import preprocessors
-from deeplearning.clgen.proto import corpus_pb2
+import cache
+import errors
+from corpuses import atomizers
+from corpuses import encoded
+from corpuses import preprocessed
+from preprocessors import preprocessors
+from proto import corpus_pb2
 from labm8 import bazelutil
 from labm8 import crypto
 from labm8 import hashcache

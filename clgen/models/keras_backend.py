@@ -8,11 +8,11 @@ import numpy as np
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import samplers
-from deeplearning.clgen import telemetry
-from deeplearning.clgen.models import backends
-from deeplearning.clgen.models import builders
-from deeplearning.clgen.models import data_generators
+from clgen import samplers
+import telemetry
+from models import backends
+from models import builders
+from models import data_generators
 from labm8 import logutil
 
 
@@ -173,14 +173,14 @@ class KerasBackend(backends.BackendBase):
     self._inference_batch_size = batch_size
     return inference_model, batch_size
 
-  def InitSampling(self, sampler: samplers.Sampler,
+  def InitSampling(self, sampler,
                    seed: typing.Optional[int] = None) -> int:
     self.inference_model, batch_size = self.GetInferenceModel()
     if seed is not None:
       np.random.seed(seed)
     return batch_size
 
-  def InitSampleBatch(self, sampler: samplers.Sampler, batch_size: int) -> None:
+  def InitSampleBatch(self, sampler, batch_size: int) -> None:
     self.inference_model.reset_states()
     # Set internal states from seed text.
     for index in sampler.encoded_start_text[:-1]:
@@ -190,7 +190,7 @@ class KerasBackend(backends.BackendBase):
 
     self.inference_indices = sampler.encoded_start_text[-1]
 
-  def SampleNextIndices(self, sampler: samplers.Sampler, batch_size: int):
+  def SampleNextIndices(self, sampler, batch_size: int):
     # Predict the next index for the entire batch.
     x = np.array([self.inference_indices] * batch_size)
     # Input shape: (bath_size, 1).

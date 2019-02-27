@@ -8,18 +8,18 @@ import numpy as np
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import cache
-from deeplearning.clgen import errors
-from deeplearning.clgen import samplers
-from deeplearning.clgen import telemetry
-from deeplearning.clgen.corpuses import atomizers
-from deeplearning.clgen.corpuses import corpuses
-from deeplearning.clgen.models import builders
-from deeplearning.clgen.models import keras_backend
-from deeplearning.clgen.models import tensorflow_backend
-from deeplearning.clgen.proto import internal_pb2
-from deeplearning.clgen.proto import model_pb2
-from deeplearning.clgen.proto import telemetry_pb2
+import cache
+from clgen import errors
+from clgen import samplers
+import telemetry
+from corpuses import atomizers
+from corpuses import corpuses
+from models import builders
+from models import keras_backend
+from models import tensorflow_backend
+from proto import internal_pb2
+from proto import model_pb2
+from proto import telemetry_pb2
 from labm8 import crypto
 from labm8 import labdate
 from labm8 import lockfile
@@ -162,7 +162,7 @@ class Model(object):
     return self
 
   def Sample(
-      self, sampler: samplers.Sampler, min_num_samples: int,
+      self, sampler, min_num_samples: int,
       seed: int = None) -> typing.List[model_pb2.Sample]:
     """Sample a model.
 
@@ -270,7 +270,7 @@ class Model(object):
     return samples
 
   def SampleFast(
-      self, sampler: samplers.Sampler, min_num_samples: int,
+      self, sampler, min_num_samples: int,
       seed: int = None) -> typing.List[model_pb2.Sample]:
     """Sample a model.
 
@@ -364,7 +364,7 @@ class Model(object):
 
     return samples
 
-  def SamplerCache(self, sampler: samplers.Sampler) -> pathlib.Path:
+  def SamplerCache(self, sampler) -> pathlib.Path:
     """Get the path to a sampler cache.
 
     Args:

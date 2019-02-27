@@ -16,10 +16,10 @@ from absl import logging
 from sqlalchemy.ext import declarative
 from sqlalchemy.sql import func
 
-from deeplearning.clgen import errors
-from deeplearning.clgen.corpuses import atomizers
-from deeplearning.clgen.corpuses import preprocessed
-from deeplearning.clgen.proto import internal_pb2
+import errors
+from corpuses import atomizers
+from corpuses import preprocessed
+from proto import internal_pb2
 from labm8 import sqlutil
 
 

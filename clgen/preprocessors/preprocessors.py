@@ -5,8 +5,8 @@ from io import open
 
 from absl import flags
 
-from deeplearning.clgen import errors
-from deeplearning.clgen.preprocessors import public
+import errors
+from preprocessors import public
 
 
 FLAGS = flags.FLAGS
@@ -18,8 +18,8 @@ def GetPreprocessorFunction(name: str) -> public.PreprocessorFunction:
   A preprocessor is a function which takes a single argument 'text' of type str,
   and returns a str. The name is the fully qualified name of the python
   function which implements it, in the form <module>:<name>. For example,
-  the name 'deeplearning.clgen.preprocessors.cxx:Compile' will return the
-  function 'Compile' in the module 'deeplearning.clgen.preprocessors.cxx'.
+  the name 'preprocessors.cxx:Compile' will return the
+  function 'Compile' in the module 'preprocessors.cxx'.
 
   Args:
     name: The name of the preprocessor to get.

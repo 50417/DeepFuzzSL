@@ -19,10 +19,10 @@ from absl import logging
 from sqlalchemy.ext import declarative
 from sqlalchemy.sql import func
 
-from deeplearning.clgen import errors
-from deeplearning.clgen.preprocessors import preprocessors
-from deeplearning.clgen.proto import corpus_pb2
-from deeplearning.clgen.proto import internal_pb2
+import errors
+from preprocessors import preprocessors
+from proto import corpus_pb2
+from proto import internal_pb2
 from labm8 import fs
 from labm8 import sqlutil
 

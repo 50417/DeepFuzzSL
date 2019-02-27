@@ -272,7 +272,7 @@ def main(argv):
     # Rewrite git@ to https:// if required.
     if git_remote.startswith('https://'):
       logging.info('Rewriting .gitmodules to use https://')
-      RewriteGitSubmodulesToHttps()
+      #RewriteGitSubmodulesToHttps()
 
   # Python2 doesn't have subprocess.DEVNULL defined.
   DEVNULL = open(os.devnull, 'w')

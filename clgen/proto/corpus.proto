@@ -10,7 +10,7 @@
 syntax = "proto2";
 package clgen;
 
-option java_package = "deeplearning.clgen";
+option java_package = "clgen";
 
 // The specification of a training corpus.
 message Corpus {

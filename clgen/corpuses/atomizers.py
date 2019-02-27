@@ -10,7 +10,7 @@ from collections import Counter
 import numpy as np
 from absl import flags
 
-from deeplearning.clgen import errors
+from clgen import errors
 from labm8 import labdate
 
 

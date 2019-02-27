@@ -16,16 +16,3 @@ filegroup(
     name = "configure_py",
     srcs = ["configure"],
 )
-
-py_test(
-    name = "configure_test",
-    srcs = ["configure_test.py"],
-    data = [":configure_py"],
-    default_python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [
-        "//labm8:bazelutil",
-        "//third_party/py/absl",
-        "//third_party/py/pytest",
-    ],
-)

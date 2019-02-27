@@ -16,8 +16,8 @@ import numpy as np
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import errors
-from deeplearning.clgen.proto import model_pb2
+import errors
+from proto import model_pb2
 
 
 FLAGS = flags.FLAGS

@@ -7,14 +7,14 @@ import numpy as np
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import samplers
-from deeplearning.clgen import telemetry
-from deeplearning.clgen.corpuses import atomizers
-from deeplearning.clgen.models import keras_backend
-from deeplearning.clgen.models import tensorflow_backend
-from deeplearning.clgen.proto import internal_pb2
-from deeplearning.clgen.proto import model_pb2
-from deeplearning.clgen.proto import telemetry_pb2
+import samplers
+import telemetry
+from corpuses import atomizers
+from models import keras_backend
+from models import tensorflow_backend
+from proto import internal_pb2
+from proto import model_pb2
+from proto import telemetry_pb2
 from labm8 import cache
 from labm8 import labdate
 from labm8 import pbutil
@@ -47,7 +47,7 @@ class PreTrainedModel(object):
     return telemetry.TrainingLogger(self.cache.path / 'logs').EpochTelemetry()
 
   def Sample(
-      self, sampler: samplers.Sampler, min_num_samples: int,
+      self, sampler, min_num_samples: int,
       seed: int = None) -> typing.Iterable[model_pb2.Sample]:
     """Sample a model.
 

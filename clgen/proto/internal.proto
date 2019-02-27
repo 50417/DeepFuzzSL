@@ -6,9 +6,9 @@ package clgen;
 option java_package = "deeplearning.clgen";
 option java_outer_classname = "InternalProtos";
 
-import "deeplearning/clgen/proto/corpus.proto";
-import "deeplearning/clgen/proto/model.proto";
-import "deeplearning/clgen/proto/sampler.proto";
+import "clgen/proto/corpus.proto";
+import "clgen/proto/model.proto";
+import "clgen/proto/sampler.proto";
 
 // The schema for a corpus metafile. An instance of this proto is created with
 // name META.pbtxt in the cache directory of each corpus.

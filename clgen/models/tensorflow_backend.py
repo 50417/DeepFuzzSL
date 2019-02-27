@@ -10,11 +10,11 @@ import progressbar
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import samplers
-from deeplearning.clgen import telemetry
-from deeplearning.clgen.models import backends
-from deeplearning.clgen.models import data_generators
-from deeplearning.clgen.proto import model_pb2
+import samplers
+import telemetry
+from models import backends
+from models import data_generators
+from proto import model_pb2
 
 
 FLAGS = flags.FLAGS
@@ -325,7 +325,7 @@ class TensorFlowBackend(backends.BackendBase):
 
         logger.EpochEndCallback(epoch_num, loss)
 
-  def InitSampling(self, sampler: samplers.Sampler,
+  def InitSampling(self, sampler,
                    seed: typing.Optional[int] = None) -> int:
     """Initialize model for sampling."""
     # Delete any previous sampling session.
@@ -359,7 +359,7 @@ class TensorFlowBackend(backends.BackendBase):
 
     return self.config.training.batch_size
 
-  def InitSampleBatch(self, sampler: samplers.Sampler, batch_size: int) -> None:
+  def InitSampleBatch(self, sampler, batch_size: int) -> None:
     self.inference_state = self.inference_sess.run(
         self.cell.zero_state(batch_size, self.inference_tf.float32))
     self.inference_indices = np.zeros((batch_size, 1))
@@ -374,7 +374,7 @@ class TensorFlowBackend(backends.BackendBase):
       [self.inference_state] = self.inference_sess.run([self.final_state], feed)
     self.inference_indices[:] = sampler.encoded_start_text[-1]
 
-  def SampleNextIndices(self, sampler: samplers.Sampler, batch_size: int):
+  def SampleNextIndices(self, sampler, batch_size: int):
     # Sample distribution to pick next symbol.
     feed = {
       self.input_data: self.inference_indices,

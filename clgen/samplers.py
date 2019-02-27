@@ -3,42 +3,20 @@
 A Sampler is an object which, when passed to a mode's Sample() method,
 determines the shape of the generated samples.
 """
+import sys
+sys.path.append('/home/deepfuzz/Desktop/DeepFuzzTest/clgen')
 import typing
 
 from absl import flags
 
-from deeplearning.clgen import errors
-from deeplearning.clgen.corpuses import atomizers
-from deeplearning.clgen.proto import sampler_pb2
+from clgen import errors
+from corpuses import atomizers
+from proto import sampler_pb2
 from labm8 import crypto
 from labm8 import pbutil
 
 
 FLAGS = flags.FLAGS
-
-
-def AssertConfigIsValid(config: sampler_pb2.Sampler) -> sampler_pb2.Sampler:
-  """Assert that a sampler configuration contains no invalid values.
-
-  Args:
-    config: A sampler configuration proto.
-
-  Returns:
-    The sampler configuration proto.
-
-  Raises:
-    UserError: If there are configuration errors.
-  """
-  try:
-    pbutil.AssertFieldConstraint(config, 'start_text', lambda s: len(s),
-                                 'Sampler.start_text must be a string')
-    pbutil.AssertFieldConstraint(config, 'batch_size', lambda x: 0 < x,
-                                 'Sampler.batch_size must be > 0')
-    pbutil.AssertFieldConstraint(config, 'temperature_micros', lambda x: 0 < x,
-                                 'Sampler.temperature_micros must be > 0')
-    return config
-  except pbutil.ProtoValueError as e:
-    raise errors.UserError(e)
 
 
 class TerminationCriterionBase(object):
@@ -270,3 +248,28 @@ class Sampler(object):
 
   def __ne__(self, rhs) -> bool:
     return not self.__eq__(rhs)
+
+
+
+def AssertConfigIsValid(config: sampler_pb2.Sampler) -> sampler_pb2.Sampler:
+  """Assert that a sampler configuration contains no invalid values.
+
+  Args:
+    config: A sampler configuration proto.
+
+  Returns:
+    The sampler configuration proto.
+
+  Raises:
+    UserError: If there are configuration errors.
+  """
+  try:
+    pbutil.AssertFieldConstraint(config, 'start_text', lambda s: len(s),
+                                 'Sampler.start_text must be a string')
+    pbutil.AssertFieldConstraint(config, 'batch_size', lambda x: 0 < x,
+                                 'Sampler.batch_size must be > 0')
+    pbutil.AssertFieldConstraint(config, 'temperature_micros', lambda x: 0 < x,
+                                 'Sampler.temperature_micros must be > 0')
+    return config
+  except pbutil.ProtoValueError as e:
+    raise errors.UserError(e)
