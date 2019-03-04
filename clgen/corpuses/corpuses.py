@@ -60,7 +60,7 @@ def AssertConfigIsValid(config: corpus_pb2.Corpus) -> corpus_pb2.Corpus:
     pbutil.AssertFieldIsSet(config, 'contentfile_separator')
     # Check that the preprocessor pipeline resolves to preprocessor functions.
     [preprocessors.GetPreprocessorFunction(p) for p in config.preprocessor]
-
+    
     if config.HasField('greedy_multichar_atomizer'):
       if not config.greedy_multichar_atomizer.tokens:
         raise errors.UserError('GreedyMulticharAtomizer.tokens is empty')
@@ -107,7 +107,7 @@ class Corpus(object):
     self.config.CopyFrom(AssertConfigIsValid(config))
     self._atomizer = None
     self._created = False
-
+    
     cache.cachepath('corpus').mkdir(parents=True, exist_ok=True)
     hc = hashcache.HashCache(cache.cachepath('hashcache.db'), 'sha1')
     self.content_id = ResolveContentId(self.config, hc)

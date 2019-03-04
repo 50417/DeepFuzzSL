@@ -3,9 +3,9 @@ import typing
 
 from absl import flags
 
-from deeplearning.clgen.preprocessors import clang
-from deeplearning.clgen.preprocessors import normalizer
-from deeplearning.clgen.preprocessors import public
+from clgen.preprocessors import clang
+from clgen.preprocessors import normalizer
+from clgen.preprocessors import public
 from labm8 import bazelutil
 
 

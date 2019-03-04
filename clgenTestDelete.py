@@ -46,14 +46,8 @@ from labm8 import pbutil
 from labm8 import prof
 
 
-print("I am initialized above flag")
-for name in list(flags.FLAGS):
-    print(name)
-#    delattr(flags.FLAGS,name)
+
 FLAGS = flags.FLAGS
-print("I am below flags")
-for name in list(FLAGS):
-    print(name)
 flags.DEFINE_string(
     'config', None,
     'Path to a Instance proto file.')
@@ -117,6 +111,7 @@ class Instance(object):
       else:
         self.model: pretrained.PreTrainedModel = pretrained.PreTrainedModel(
             pathlib.Path(config.pretrained_model))
+     
       self.sampler: samplers.Sampler = samplers.Sampler(config.sampler)
 
   @contextlib.contextmanager
@@ -253,7 +248,6 @@ def DoFlagsAction():
     raise app.UsageError(f"File not found: '{config_path}'")
   config = pbutil.FromFile(config_path, clgen_pb2.Instance())
   os.environ['PWD'] = str(config_path.parent)
-
   if FLAGS.clgen_profiling:
     prof.enable()
 
@@ -294,6 +288,7 @@ def DoFlagsAction():
         shutil.copyfile(path, export_dir / relpath)
         print(export_dir / relpath)
     else:
+      print("I am here in the else")  
       instance.model.Sample(instance.sampler, FLAGS.min_samples)
 
 

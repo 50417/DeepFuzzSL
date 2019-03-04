@@ -3,22 +3,15 @@
 # and maybe around an hour on a CPU.
 # File: //deeplearning/deepsmith/proto/clgen.proto
 # Proto: clgen.Instance
-working_dir: "/var/phd/clgen/tiny"
+working_dir: "/home/deepfuzz/Desktop/DeepFuzzTest/clgen/tests/data/tiny"
 model {
   corpus {
     local_tar_archive: "$PWD/corpus.tar.bz2"
     ascii_character_atomizer: true
     contentfile_separator: "\n\n"
-    preprocessor: "clgen.preprocessors.opencl:ClangPreprocessWithShim"
-    preprocessor: "clgen.preprocessors.opencl:Compile"
-    preprocessor: "clgen.preprocessors.opencl:NormalizeIdentifiers"
-    preprocessor: "clgen.preprocessors.opencl:StripDoubleUnderscorePrefixes"
     preprocessor: "clgen.preprocessors.common:StripDuplicateEmptyLines"
-    preprocessor: "clgen.preprocessors.opencl:SanitizeKernelPrototype"
     preprocessor: "clgen.preprocessors.common:StripTrailingWhitespace"
-    preprocessor: "clgen.preprocessors.opencl:ClangFormat"
     preprocessor: "clgen.preprocessors.common:MinimumLineCount3"
-    preprocessor: "clgen.preprocessors.opencl:Compile"
   }
   architecture {
     backend: TENSORFLOW

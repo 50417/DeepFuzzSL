@@ -1,8 +1,8 @@
 """Common preprocessor passes."""
 from absl import flags
 
-from deeplearning.clgen import errors
-from deeplearning.clgen.preprocessors import public
+from clgen import errors
+from clgen.preprocessors import public
 
 
 FLAGS = flags.FLAGS

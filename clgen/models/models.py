@@ -63,15 +63,18 @@ class Model(object):
       raise errors.UserError('TrainingOptions.sequence_length must be >= 1')
 
     self.config = model_pb2.Model()
+    
     self.config.CopyFrom(builders.AssertIsBuildable(config))
+    
     self.corpus = corpuses.Corpus(config.corpus)
+    print("After Model")
     self.hash = self._ComputeHash(self.corpus, self.config)
     self.cache = cache.mkcache('model', self.hash)
     # Create the necessary cache directories.
     (self.cache.path / 'checkpoints').mkdir(exist_ok=True)
     (self.cache.path / 'samples').mkdir(exist_ok=True)
     (self.cache.path / 'logs').mkdir(exist_ok=True)
-
+   
     # Create symlink to encoded corpus.
     symlink = self.cache.path / 'corpus'
     if not symlink.is_symlink():

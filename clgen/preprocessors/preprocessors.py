@@ -35,6 +35,7 @@ def GetPreprocessorFunction(name: str) -> public.PreprocessorFunction:
   if len(components) != 2:
     raise errors.UserError(f'Invalid preprocessor name {name}')
   module_name, function_name = components
+  
   try:
     module = importlib.import_module(module_name)
     function_ = getattr(module, function_name)

@@ -1,0 +1,5 @@
+owner_process_id: 3866
+owner_process_argv: "clgenTestDelete.py --config /home/deepfuzz/Desktop/DeepFuzzTest/clgen/tests/data/tiny/config.pbtxt"
+date_acquired_utc_epoch_ms: 1551756915098
+owner_hostname: "deepfuzz-VirtualBox"
+owner_user: "deepfuzz"
