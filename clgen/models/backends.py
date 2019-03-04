@@ -5,8 +5,8 @@ import numpy as np
 from absl import flags
 
 from clgen import samplers
-from corpuses import atomizers
-from proto import model_pb2
+from clgen.corpuses import atomizers
+from clgen.proto import model_pb2
 from labm8 import cache
 
 
@@ -30,15 +30,15 @@ class BackendBase(object):
     """Train the backend."""
     raise NotImplementedError
 
-  def InitSampling(self, sampler, seed: typing.Optional[int] = None) -> int:
+  def InitSampling(self, sampler:samplers.Sampler, seed: typing.Optional[int] = None) -> int:
     """Initialize backend for sampling."""
     raise NotImplementedError
 
-  def InitSampleBatch(self, sampler, batch_size: int) -> None:
+  def InitSampleBatch(self, sampler: samplers.Sampler, batch_size: int) -> None:
     """Begin a new sampling batch. Only called after InitSampling()."""
     raise NotImplementedError
 
-  def SampleNextIndices(self, sampler,
+  def SampleNextIndices(self, sampler: samplers.Sampler,
                         batch_size: int) -> np.ndarray:
     """Sample the next indices for the current sample batch.
 

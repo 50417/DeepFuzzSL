@@ -16,10 +16,10 @@ from absl import logging
 from sqlalchemy.ext import declarative
 from sqlalchemy.sql import func
 
-import errors
-from corpuses import atomizers
-from corpuses import preprocessed
-from proto import internal_pb2
+from clgen import errors
+from clgen.corpuses import atomizers
+from clgen.corpuses import preprocessed
+from clgen.proto import internal_pb2
 from labm8 import sqlutil
 
 

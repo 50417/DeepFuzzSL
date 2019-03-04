@@ -1,8 +1,8 @@
 """This file builds Keras models from CLgen Model config protos."""
 from absl import flags
 
-import errors
-from proto import model_pb2
+from clgen import errors
+from clgen.proto import model_pb2
 from labm8 import pbutil
 
 

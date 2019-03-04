@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar  4 11:40:47 2019
+
+@author: deepfuzz
+"""
+
 """CLgen: a deep learning program generator.
 
 The core operations of CLgen are:
@@ -28,25 +36,23 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import errors
-import samplers
-from models import models
-from models import pretrained
-from proto import clgen_pb2
-from proto import model_pb2
+from clgen import errors
+from clgen import samplers
+from clgen.models import models
+from clgen.models import pretrained
+from clgen.proto import clgen_pb2
+from clgen.proto import model_pb2
 from labm8 import pbutil
 from labm8 import prof
 
 
 print("I am initialized above flag")
-
 for name in list(flags.FLAGS):
     print(name)
-    delattr(flags.FLAGS,name)
-    
+#    delattr(flags.FLAGS,name)
 FLAGS = flags.FLAGS
 print("I am below flags")
-for name in list(flags.FLAGS):
+for name in list(FLAGS):
     print(name)
 flags.DEFINE_string(
     'config', None,

@@ -10,7 +10,7 @@ from typing import List, TextIO
 
 import numpy as np
 
-from deeplearning.clgen import errors
+from clgen import errors
 from labm8 import bazelutil
 from labm8 import labmath
 

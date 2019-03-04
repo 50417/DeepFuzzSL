@@ -16,8 +16,8 @@ import numpy as np
 from absl import flags
 from absl import logging
 
-import errors
-from proto import model_pb2
+from clgen import errors
+from clgen.proto import model_pb2
 
 
 FLAGS = flags.FLAGS

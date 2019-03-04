@@ -12,8 +12,8 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from proto import model_pb2 as clgen_dot_proto_dot_model__pb2
-from proto import sampler_pb2 as clgen_dot_proto_dot_sampler__pb2
+from clgen.proto import model_pb2 as clgen_dot_proto_dot_model__pb2
+from clgen.proto import sampler_pb2 as clgen_dot_proto_dot_sampler__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(

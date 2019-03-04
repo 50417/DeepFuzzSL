@@ -3,7 +3,7 @@ import typing
 
 from absl import flags
 
-import errors
+from clgen import errors
 
 
 FLAGS = flags.FLAGS

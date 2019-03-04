@@ -5,8 +5,8 @@ import tempfile
 import pytest
 from absl import app
 
-from deeplearning.clgen import clgen
-from deeplearning.clgen.proto import clgen_pb2
+from clgen import clgen
+from clgen.proto import clgen_pb2
 from labm8 import bazelutil
 from labm8 import pbutil
 

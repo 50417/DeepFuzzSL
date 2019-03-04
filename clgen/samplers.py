@@ -3,15 +3,13 @@
 A Sampler is an object which, when passed to a mode's Sample() method,
 determines the shape of the generated samples.
 """
-import sys
-sys.path.append('/home/deepfuzz/Desktop/DeepFuzzTest/clgen')
 import typing
 
 from absl import flags
 
 from clgen import errors
-from corpuses import atomizers
-from proto import sampler_pb2
+from clgen.corpuses import atomizers
+from clgen.proto import sampler_pb2
 from labm8 import crypto
 from labm8 import pbutil
 

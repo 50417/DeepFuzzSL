@@ -5,8 +5,8 @@ from io import open
 
 from absl import flags
 
-import errors
-from preprocessors import public
+from clgen import errors
+from clgen.preprocessors import public
 
 
 FLAGS = flags.FLAGS

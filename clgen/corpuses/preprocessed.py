@@ -19,10 +19,10 @@ from absl import logging
 from sqlalchemy.ext import declarative
 from sqlalchemy.sql import func
 
-import errors
-from preprocessors import preprocessors
-from proto import corpus_pb2
-from proto import internal_pb2
+from clgen import errors
+from clgen.preprocessors import preprocessors
+from clgen.proto import corpus_pb2
+from clgen.proto import internal_pb2
 from labm8 import fs
 from labm8 import sqlutil
 
