@@ -36,7 +36,7 @@ model {
   }
 }
 sampler {
-  start_text: "kernel void A("
+  start_text: "Model {"
   batch_size: 1
   temperature_micros: 800000  # = 0.8 real value
   termination_criteria {
