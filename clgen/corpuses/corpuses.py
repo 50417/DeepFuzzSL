@@ -109,6 +109,7 @@ class Corpus(object):
     self._created = False
     
     cache.cachepath('corpus').mkdir(parents=True, exist_ok=True)
+    print(cache.cachepath('hashcache.db'))
     hc = hashcache.HashCache(cache.cachepath('hashcache.db'), 'sha1')
     self.content_id = ResolveContentId(self.config, hc)
     # Database of pre-processed files.

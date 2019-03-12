@@ -3,7 +3,7 @@
 # and maybe around an hour on a CPU.
 # File: //deeplearning/deepsmith/proto/clgen.proto
 # Proto: clgen.Instance
-working_dir: "/home/deepfuzz/Desktop/DeepFuzzTest/clgen/tests/data/tiny/experiments"
+working_dir: "/tmp/experiments"
 model {
   corpus {
     local_tar_archive: "$PWD/corpus.tar.bz2"
