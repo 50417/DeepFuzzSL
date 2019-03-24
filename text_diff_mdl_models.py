@@ -5,7 +5,7 @@ import argparse
 import sys
 import datetime
 import time
-import progressbar
+import progressbar 
 
 widgets=[
     ' [', progressbar.Timer(), '] ',
@@ -64,7 +64,7 @@ class text_diff():
 				0= Entirely different
 		"""
 
-		seqMatcher = SequenceMatcher(None, file1, file2)
+		seqMatcher = SequenceMatcher(lambda x: x == " ", file1, file2)
 		return seqMatcher.ratio()
 
 	def compare_two_files(self) -> float:
@@ -93,15 +93,16 @@ class text_diff():
 		'''
 		duplicate_files = []
 		self.get_files_from_directory()
-
+		bar = progressbar.ProgressBar( min_value = 0,max_value = len(self.file_list),widgets=widgets)
 		for f1 in self.file_list:
-			#bar = progressbar.progressbar(max_value = 1000, widgets=widgets).start()
+			
 			
 			# No need to compare duplicate files or create its own dictionary
 			if f1 in duplicate_files:
 				continue
 			bar_counter = 0
 			print ("Comparing "+f1 + " with others files")
+			bar.start()
 			file1 = open(self.fileDirectory + "/" + f1).read()
 			self.duplicate_files_dict[f1] = []
 			for f2 in self.file_list:
@@ -115,7 +116,8 @@ class text_diff():
 					duplicate_files.append(f2)
 					self.duplicate_files_dict[f1].append({f2:score})
 
-				#bar.update(bar_counter)
+				bar.update(bar_counter)
+			bar.finish()
 		return (self.duplicate_files_dict)
 
 	def print_report(self):
