@@ -246,11 +246,11 @@ class Model(object):
                   sample_time_ms=end_time - start_time,
                   wall_time_ms=end_time - wall_time_start,
                   num_tokens=len(samples_in_progress[i]))
-              print(f'=== BEGIN CLGEN SAMPLE {sample_count} '
+              print(f'=== BEGIN SIMULINK MDL SAMPLE {sample_count} '
                     f'===\n\n{sample.text}\n')
               sample_count += 1
               sample_id = crypto.sha256_str(sample.text)
-              sample_path = sample_dir / f'{sample_id}.pbtxt'
+              sample_path = sample_dir / f'Sample{sample_count}.mdl'
               pbutil.ToFile(sample, sample_path)
               if min_num_samples > 0:
                 samples.append(sample)
