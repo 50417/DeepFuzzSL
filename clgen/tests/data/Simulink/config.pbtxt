@@ -146,7 +146,7 @@ model {
   }
 }
 sampler {
-  start_text: "Model {"
+  start_text: "Model {\nName \"toymdl\"\nSystem "  "
   batch_size: 1
   temperature_micros: 800000  # = 0.8 real value
   termination_criteria {
