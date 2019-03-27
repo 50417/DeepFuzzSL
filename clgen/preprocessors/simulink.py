@@ -121,7 +121,6 @@ def interLeaveBlocksandLines(text:str)->str:
   Raises:
     
   """
-  print("Simulink is called")
   for l in text.splitlines():
       line= l.strip()
       tokens = get_sl_tokens(line)
