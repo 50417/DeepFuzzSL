@@ -31,6 +31,8 @@ class text_diff():
 		Returns: 
 		None 
 		"""
+		#ADD check here 
+
 		self.fileDirectory = file_directory
 		self.mode = mode
 		self.score = score
@@ -39,6 +41,7 @@ class text_diff():
 		self.file_to_compare = file_to_compare
 		self.file_to_compare_with = file_to_compare_with
 		self.output_path = output_path
+
 
 	def get_files_from_directory(self):
 		'''
@@ -77,6 +80,7 @@ class text_diff():
 				1= Exactly the same 
 				0= Entirely different
 		"""
+
 		file1 = open(self.file_to_compare_with).read()
 		file2 = open(self.file_to_compare).read()
 		print(self.compare_files(file1, file2))
@@ -112,7 +116,7 @@ class text_diff():
 
 				file2 = open(self.fileDirectory + "/" + f2).read()
 				score = self.compare_files(file1, file2)
-				if score == 1.0:
+				if score == self.score:
 					duplicate_files.append(f2)
 					self.duplicate_files_dict[f1].append({f2:score})
 
@@ -228,7 +232,7 @@ def main():
 		text_diff_obj.save_report()
 		#text_diff_obj.print_report()
 	elif(args.inputFile is not None):
-		text_diff_obj = text_diff(args.score, args.mode,args.inputPath,args.inputFile[0],args.inputFile[1] )
+		text_diff_obj = text_diff(score = args.score, args.mode,args.inputPath, file_to_compare_with=args.inputFile[0],file_to_compare=args.inputFile[1] )
 		text_diff_obj.compare_two_files()
 
 if __name__ == '__main__':
