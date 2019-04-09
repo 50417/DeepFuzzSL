@@ -1,10 +1,13 @@
-# A  corpus of Simulink mdl Files of 1000 processed models.
+# A tiny corpus of OpenCL kernels and a correspondingly small model.
 # It should take around 30 minutes to train on a reasonably powerful GPU,
 # and maybe around an hour on a CPU.
+# File: //deeplearning/deepsmith/proto/clgen.proto
+# Proto: clgen.Instance
 working_dir: "/tmp/experiments"
 model {
   corpus {
     local_tar_archive: "$PWD/mdl.tar.bz2"
+    ascii_character_atomizer: true
     #ascii_character_atomizer: true
      greedy_multichar_atomizer {
            tokens: "slope"
@@ -117,17 +120,38 @@ model {
       tokens: "vinit"
       tokens: "ModelBrowserWidth"
       tokens: "OutDataTypeStr"
+      tokens: "cfblk1"
+      tokens: "cfblk2"
+      tokens: "cfblk3"
+      tokens: "cfblk4"
+      tokens: "cfblk5"
+      tokens: "cfblk6"
+      tokens: "cfblk7"
+      tokens: "cfblk8"
+      tokens: "cfblk9"
+      tokens: "cfblk10"
+      tokens: "cfblk11"
+      tokens: "cfblk12"
+      tokens: "cfblk13"
+      tokens: "cfblk14"
+      tokens: "cfblk15"
+      tokens: "cfblk16"
+      tokens: "cfblk17"
+      tokens: "cfblk18"
+      tokens: "cfblk19"
+      tokens: "cfblk20"
+      tokens: "cfblk21"
      }
     contentfile_separator: "\n\n"
     preprocessor: "clgen.preprocessors.common:StripDuplicateEmptyLines"
     preprocessor: "clgen.preprocessors.common:StripTrailingWhitespace"
-    preprocessor: "clgen.preprocessors.common:MinimumLineCount3"
-    preprocessor: "clgen.preprocessors.simulink:interLeaveBlocksandLines"
+    preprocessor: "clgen.preprocessors.simulink:StripDuplicateWhiteSpaces"
+    preprocessor: "clgen.preprocessors.simulink:RemoveUnnecessaryOnSimulink"
   }
   architecture {
     backend: TENSORFLOW
     neuron_type: LSTM
-    neurons_per_layer: 128
+    neurons_per_layer: 512
     num_layers: 2
     post_layer_dropout_micros: 0  # = 0.0 real value
   }
@@ -146,7 +170,7 @@ model {
   }
 }
 sampler {
-  start_text: "Model {\nName \"toymdl\"\nSystem "  "
+  start_text: "kernel void A("
   batch_size: 1
   temperature_micros: 800000  # = 0.8 real value
   termination_criteria {

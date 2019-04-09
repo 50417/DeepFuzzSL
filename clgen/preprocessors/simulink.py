@@ -1,4 +1,4 @@
-"""Common preprocessor passes."""
+"""Simulink preprocessor passes."""
 from absl import flags
 
 from clgen import errors
@@ -109,7 +109,69 @@ def _decrement_scope( top):
         _collections[-1].add_line(top.output)
 
 @public.clgen_preprocessor
+def StripDuplicateWhiteSpaces(text: str) -> str:
+  """
+  Extra WhiteSpaces removed between Keywords and  and its assignment
+  Args:
+    text: The Simulink MdlFile source to preprocess.
+  Returns:
+    Simulink source code with middle or duplicate whitespaces stripped
+  """
+  last_line = None
+  lines = []
+  for line in text.split("\n"):
+    line = line.replace(" \t","  ")
+    line = re.sub("\s\s+"," ",line.lstrip())
+    lines.append(line) 
+  return "\n".join(lines)
+
+@public.clgen_preprocessor
+def RemoveUnnecessaryOnSimulink(text: str) -> str:
+  """
+  Remove Unnecessary keywords
+  Args:
+    text: The Simulink MdlFile source to preprocess.
+  Returns:
+    Simulink source code with Unnecessary keywords removed
+  """
+  lines = []
+  count = 0
+  print("I am here in this preprocessor")
+  for line in text.split("\n"):
+    line = line.lstrip()
+    if line.startswith('Position') or line.startswith('ZOrder'):
+      continue
+    lines.append(line)
+  return "\n".join(lines)
+
+
+@public.clgen_preprocessor
 def interLeaveBlocksandLines(text:str)->str:
+  """Private implementation of minimum number of lines.
+
+  Args:
+    text: The source mdl files
+
+  Returns:
+    src: The modified input src with interleaving Line and Block.
+
+  Raises:
+    
+  """
+  for l in text.splitlines():
+      line= l.strip()
+      tokens = get_sl_tokens(line)
+  
+      top = _collections[-1]
+      lookup = _collectibles[-1] # Top of collectibles
+      if lookup is not None and (lookup[top.kw] is None or tokens[0] in lookup[top.kw] or None in lookup[top.kw]):
+        _include_line(line, l, tokens, top)  # This may change top by pushing new
+      else:
+        _skip_line(line, l, tokens, top)
+  return _collections[-1].output
+
+@public.clgen_preprocessor
+def removeZorder(text:str)->str:
   """Private implementation of minimum number of lines.
 
   Args:
