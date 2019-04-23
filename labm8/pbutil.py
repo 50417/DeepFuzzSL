@@ -117,7 +117,7 @@ def FromFile(path: pathlib.Path, message: ProtocolBuffer,
   suffix = suffixes[-1] if suffixes else ''
   try:
     with open_function(path, 'rb') as f:
-      if suffix == '.txt' or suffix == '.pbtxt':
+      if suffix == '.txt' or suffix == '.pbtxt' or suffix == '.mdl':
         # Allow uninitialized fields here because we will catch the error later,
         # allowing us to report the path of the proto.
         FromString(f.read().decode('utf-8'), message, uninitialized_okay=True)
@@ -194,14 +194,26 @@ def ToFile(message: ProtocolBuffer, path: pathlib.Path,
     open_function = open
 
   suffix = suffixes[-1] if suffixes else ''
-  mode = 'wt' if suffix in {'.txt', '.pbtxt', '.json'} else 'wb'
-
+  mode = 'wt' if suffix in {'.txt', '.pbtxt', '.json','.mdl'} else 'wb'
   with open_function(path, mode) as f:
+
     if suffix == '.txt' or suffix == '.pbtxt':
       f.write(google.protobuf.text_format.MessageToString(message))
     elif suffix == '.json':
       f.write(google.protobuf.json_format.MessageToJson(
           message, preserving_proto_field_name=True))
+    elif suffix == '.mdl':
+      keywords =        ["slope"      , "ContentPreviewEnabled"      , "ScreenColor"      , "OutValues"      , "SrcBlock"      , "SampleTime"      , "ICPrevInput"      , "Filename"      , "Branch"      , "SID"      , "BlockType"      , "ymin"      , "Port"      , "OutputDataTypeScalingMode"      , "ymax"      , "TimeValues"      , "SrcPort"      , "SourceBlock"      , "SaturateOnIntegerOverflow"      , "start"      , "includeCurrent"      , "ModelBrowserVisibility"      , "X0"      , "ZeroZ"      , "OutputPortMap"      , "rep_seq_t"      , "SaveFormat"      , "Save2DSignal"      , "Ts"      , "LibraryVersion"      , "rep_seq_y"      , "Value"      , "PaperType"      , "Points"      , "T"      , "FixptAsFi"      , "Position"      , "InitialConditionSetting"      , "DoSatur"      , "Ports"      , "OutMax"      , "NumInputPorts"      , "Decimation"      , "Period"      , "ShowPageBoundaries"      , "PoleZ"      , "InputProcessing"      , "OutMin"      , "xmax"      , "Name"      , "PaperOrientation"      , "VariableName"      , "SIDHighWatermark"      , "DelayLengthSource"      , "f1"      , "f2"      , "Gain"      , "PulseType"      , "System"      , "tsamp"      , "PaperPositionMode"      , "ShowEnablePort"      , "seed"      , "Poles"      , "Location"      , "Units"      , "PortBlocksUseCompactNotation"      , "LookUpMeth"      , "ConRadixGroup"      , "TiledPageScale"      , "ReportName"      , "xmin"      , "uplimit"      , "DstBlock"      , "ZoomFactor"      , "InputPortMap"      , "TiledPaperMargins"      , "After"      , "SourceProductName"      , "ZOrder"      , "NumDelays"      , "OutScaling"      , "Line"      , "PaperUnits"      , "RndMeth"      , "Cov"      , "NumBits"      , "ICPrevOutput"      , "DelayOrder"      , "SourceProductBaseCode"      , "IconDisplay"      , "LockScale"      , "Model"      , "samptime"      , "{"      , "Block"      , "SourceType"      , "ICPrevScaledInput"      , "Open"      , "st"      , "PulseWidth"      , "MaxDataPoints"      , "VectorParams1D"      , "OutDataType"      , "Floating"      , "DstPort"      , "}"      , "vinit"      , "ModelBrowserWidth"      , "OutDataTypeStr"]
+      outputString = ""
+  
+      for txt in message.text.split():
+        if txt in keywords:
+          outputString = outputString+"\n" + txt 
+        else: 
+          outputString= outputString+ " "+ txt
+        
+      print(outputString)
+      f.write(outputString) # Needs to be changed to also capture other information
     else:
       f.write(message.SerializeToString())
 
