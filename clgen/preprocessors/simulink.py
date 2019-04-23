@@ -4,6 +4,7 @@ from absl import flags
 from clgen import errors
 from clgen.preprocessors import public
 import re
+import string
 
 FLAGS = flags.FLAGS
 class CollectedToken:
@@ -133,21 +134,21 @@ def RemoveUnnecessaryOnSimulink(text: str) -> str:
     text: The Simulink MdlFile source to preprocess.
   Returns:
     Simulink source code with Unnecessary keywords removed
-  """
-  lines = []
-  count = 0
-  print("I am here in this preprocessor")
-  for line in text.split("\n"):
-    line = line.lstrip()
-    if line.startswith('Position') or line.startswith('ZOrder'):
-      continue
-    lines.append(line)
-  return "\n".join(lines)
+    """
+    lines = []
+    count = 0
+    for line in text.split("\n"):
+        removeList = ["Location","Open", "Points","ZOrder","Position",     "PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
+        line = line.lstrip()
+        if line.startswith(tuple(removeList)):
+            continue
+        lines.append(line)
+return "\n".join(lines)
 
 
 @public.clgen_preprocessor
 def interLeaveBlocksandLines(text:str)->str:
-  """Private implementation of minimum number of lines.
+  """InterLeave Blocks Blocks and Lines connecting them.
 
   Args:
     text: The source mdl files
@@ -169,28 +170,68 @@ def interLeaveBlocksandLines(text:str)->str:
       else:
         _skip_line(line, l, tokens, top)
   return _collections[-1].output
+
+def getTokens(line): 
+  return re.split(r'[\s]+', line)
 
 @public.clgen_preprocessor
-def removeZorder(text:str)->str:
-  """Private implementation of minimum number of lines.
+def RenameModelName(text:str)->str:
+  """Rename all MOdel Names to sample.
 
   Args:
     text: The source mdl files
 
   Returns:
-    src: The modified input src with interleaving Line and Block.
-
+    src: The modified input with Model name renamed to sample.
+ 
   Raises:
     
   """
-  for l in text.splitlines():
-      line= l.strip()
-      tokens = get_sl_tokens(line)
-  
-      top = _collections[-1]
-      lookup = _collectibles[-1] # Top of collectibles
-      if lookup is not None and (lookup[top.kw] is None or tokens[0] in lookup[top.kw] or None in lookup[top.kw]):
-        _include_line(line, l, tokens, top)  # This may change top by pushing new
-      else:
-        _skip_line(line, l, tokens, top)
-  return _collections[-1].output
+  modelFlag = 1
+  lines = []
+  for line in text.split("\n"):
+    tokens = getTokens(line)
+    line = line.lstrip()
+    if('Model' in tokens):
+      modelFlag = 0
+    elif('Name' in tokens and modelFlag==0):
+      text = text.replace(tokens[1],"\"sample\"")
+      break
+  return text
+
+def collectBlockNames(text:str):
+  blockFlag = 1
+  setOfNames = set()
+  for line in text.split("\n"):
+    line = line.strip()
+    tokens = getTokens(line)
+    if('Block' in tokens):
+      blockFlag = 0
+    elif('Name' in tokens and blockFlag==0):
+      setOfNames.add(tokens[1])
+  return setOfNames
+
+@public.clgen_preprocessor
+def RenameBlockNames(text:str)->str:
+  """Rename all blocks Names to ASCII characters .
+  Need work when there are more variable than ASCII characters
+  Need TEST cases and exceptions
+
+  Args:
+    text: The source mdl files
+
+  Returns:
+    src: The modified input with Block name renamed .
+ 
+  Raises:
+    
+  """
+  blockNames = collectBlockNames(text)
+  i = 0 
+  for name in blockNames:
+      #print(str(i)+" "+name+" " +string.ascii_letters[i])
+      text = text.replace(name,"\""+string.ascii_letters[i]+"\"")
+      i=i+1
+
+
+  return text 
