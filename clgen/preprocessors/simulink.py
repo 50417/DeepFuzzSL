@@ -143,14 +143,14 @@ def RemoveUnnecessaryOnSimulink(text: str) -> str:
         if line.startswith(tuple(removeList)):
             continue
         lines.append(line)
-return "\n".join(lines)
+    return "\n".join(lines)
 
 
 @public.clgen_preprocessor
 def interLeaveBlocksandLines(text:str)->str:
   """InterLeave Blocks Blocks and Lines connecting them.
 
-  Args:
+    Args:
     text: The source mdl files
 
   Returns:
