@@ -133,23 +133,23 @@ def RemoveUnnecessaryOnSimulink(text: str) -> str:
     text: The Simulink MdlFile source to preprocess.
   Returns:
     Simulink source code with Unnecessary keywords removed
-  """
-  lines = []
-  count = 0
-  print("I am here in this preprocessor")
-  for line in text.split("\n"):
-    line = line.lstrip()
-    if line.startswith('Position') or line.startswith('ZOrder'):
-      continue
-    lines.append(line)
-  return "\n".join(lines)
+    """
+    lines = []
+    count = 0
+    for line in text.split("\n"):
+        removeList = ["Location","Open", "Points","ZOrder","Position",     "PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
+        line = line.lstrip()
+        if line.startswith(tuple(removeList)):
+            continue
+        lines.append(line)
+    return "\n".join(lines)
 
 
 @public.clgen_preprocessor
-def interLeaveBlocksandLines(text:str)->str:
-  """Private implementation of minimum number of lines.
+def interLeaveBlocksandLines(text: str)->str:
+    """Private implementation of minimum number of lines.
 
-  Args:
+    Args:
     text: The source mdl files
 
   Returns:
