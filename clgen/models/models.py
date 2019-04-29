@@ -67,7 +67,6 @@ class Model(object):
     self.config.CopyFrom(builders.AssertIsBuildable(config))
     
     self.corpus = corpuses.Corpus(config.corpus)
-    print("After Model")
     self.hash = self._ComputeHash(self.corpus, self.config)
     self.cache = cache.mkcache('model', self.hash)
     # Create the necessary cache directories.
@@ -162,6 +161,7 @@ class Model(object):
                  self.config.training.num_epochs,
                  humanize.intcomma(total_time_ms),
                  humanize.naturaldelta(total_time_ms / 1000))
+
     return self
 
   def Sample(
@@ -201,6 +201,7 @@ class Model(object):
     with logutil.TeeLogsToFile(
         f'sampler_{sampler.hash}', self.cache.path / 'logs'):
       logging.info("Sampling: '%s'", sampler.start_text)
+
       if min_num_samples < 0:
         logging.warning(
             'Entering an infinite sample loop, this process will never end!')

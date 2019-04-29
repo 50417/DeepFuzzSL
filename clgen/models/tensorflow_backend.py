@@ -87,9 +87,7 @@ class TensorFlowBackend(backends.BackendBase):
 
     # Corpus attributes.
     sequence_length = 1 if inference else self.config.training.sequence_length
-
     vocab_size = self.atomizer.vocab_size
-
     cell = cell_type(
         self.config.architecture.neurons_per_layer, state_is_tuple=True)
     self.cell = cell = rnn.MultiRNNCell(
@@ -262,8 +260,17 @@ class TensorFlowBackend(backends.BackendBase):
       assert checkpoint_state
       assert checkpoint_state.model_checkpoint_path
       ckpt_path, ckpt_paths = self.GetParamsPath(checkpoint_state)
-
+    
+    loss_ph =tf.placeholder(tf.float32, shape=[])
+    loss_summary = tf.summary.scalar('Loss_vs_Epoch',loss_ph)
+    lr_summary = tf.summary.scalar('learning_rate_vs_epoch',self.learning_rate)
     with tf.Session() as sess:
+      # Merge all the summaries and write them out to
+      # cache path
+      merged = tf.summary.merge_all()
+      train_writer = tf.summary.FileWriter(str(self.cache.path / 'train'), sess.graph)
+      #test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
+
       tf.global_variables_initializer().run()
 
       # Keep all checkpoints.
@@ -289,7 +296,6 @@ class TensorFlowBackend(backends.BackendBase):
             (float(100 - decay_rate) / 100.0) ** (epoch_num - 1))
         sess.run(tf.assign(self.learning_rate, new_learning_rate))
         sess.run(tf.assign(self.epoch, epoch_num))
-
         # TODO(cec): refactor data generator to a Python generator.
         data_generator.CreateBatches()
 
@@ -306,6 +312,8 @@ class TensorFlowBackend(backends.BackendBase):
           loss, state, _ = sess.run(
               [self.loss, self.final_state, self.train_op], feed)
 
+        summary = sess.run(merged,feed_dict={loss_ph:loss})
+        train_writer.add_summary(summary,epoch_num)
         # Log the loss and delta.
         logging.info('Loss: %.6f.', loss)
 
@@ -333,7 +341,7 @@ class TensorFlowBackend(backends.BackendBase):
       del self.inference_tf
     if self.inference_sess:
       del self.inference_sess
-
+    print("Seed :"+str(seed))
     # Seed the RNG.
     if seed is not None:
       np.random.seed(seed)
@@ -382,8 +390,11 @@ class TensorFlowBackend(backends.BackendBase):
     }
     [predictions, self.inference_state] = self.inference_sess.run(
         [self.probs, self.final_state], feed)
+   
     self.inference_indices[:, 0] = [
       WeightedPick(p, sampler.temperature) for p in predictions]
+
+
     return [i[0] for i in self.inference_indices]
 
   @property

@@ -135,15 +135,16 @@ def RemoveUnnecessaryOnSimulink(text: str) -> str:
   Returns:
     Simulink source code with Unnecessary keywords removed
     """
-    lines = []
-    count = 0
-    for line in text.split("\n"):
-        removeList = ["Location","Open", "Points","ZOrder","Position",     "PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
+  lines = []
+  count = 0
+  for line in text.split("\n"):
+        removeList = ["Location","Open", "Points","ZOrder","Position", "SID", "ICPrevOutput", "LibraryVersion","SourceType","SourceProductName", "DelayOrder","ContentPreviewEnabled","SourceProductBaseCode","ICPrevScaledInput","OutDataTypeStr","InputProcessing", "OutputDataTypeScalingMode","InitialConditionSetting","PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
+        #removeList = ["Location","Open","ZOrder",     "PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
         line = line.lstrip()
         if line.startswith(tuple(removeList)):
             continue
         lines.append(line)
-    return "\n".join(lines)
+  return "\n".join(lines)
 
 
 @public.clgen_preprocessor
@@ -201,14 +202,17 @@ def RenameModelName(text:str)->str:
 
 def collectBlockNames(text:str):
   blockFlag = 1
-  setOfNames = set()
+  setOfNames = []
+  duplicate={}
   for line in text.split("\n"):
     line = line.strip()
     tokens = getTokens(line)
     if('Block' in tokens):
       blockFlag = 0
     elif('Name' in tokens and blockFlag==0):
-      setOfNames.add(tokens[1])
+      if tokens[1] not in duplicate:
+        duplicate[tokens[1]]=tokens[1]
+        setOfNames.append(tokens[1])
   return setOfNames
 
 @public.clgen_preprocessor
@@ -235,3 +239,24 @@ def RenameBlockNames(text:str)->str:
 
 
   return text 
+
+@public.clgen_preprocessor
+def SetSIDtoDetfault(text:str)->str:
+  """Sets SIDHighWatermark to "1"
+
+  Args:
+    text: The source mdl files
+
+  Returns:
+    src: The modified input with SIDHighWatermark set to "1"
+ 
+  Raises:
+    
+  """
+  for line in text.split("\n"):
+    tokens = getTokens(line)
+    line = line.lstrip()
+    if('SIDHighWatermark' in tokens):
+      text = text.replace(tokens[1],"\"1\"")
+      break
+  return text

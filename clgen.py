@@ -77,8 +77,9 @@ flags.DEFINE_bool(
 flags.DEFINE_bool(
     'clgen_profiling', False,
     'Enable CLgen self profiling. Profiling results be logged.')
-print("I am here")
-
+flags.DEFINE_bool(
+    'visualize', False,
+    'Enable Loss vs Epoch Visualization while training')
 class Instance(object):
   """A CLgen instance."""
 
@@ -111,7 +112,6 @@ class Instance(object):
       else:
         self.model: pretrained.PreTrainedModel = pretrained.PreTrainedModel(
             pathlib.Path(config.pretrained_model))
-     
       self.sampler: samplers.Sampler = samplers.Sampler(config.sampler)
 
   @contextlib.contextmanager
@@ -287,13 +287,11 @@ def DoFlagsAction():
         (export_dir / relpath.parent).mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, export_dir / relpath)
         print(export_dir / relpath)
-    else:
-      print("I am here in the else")  
+    else: 
       instance.model.Sample(instance.sampler, FLAGS.min_samples)
 
 
 def main(argv):
-  print("Inside Main")
   """Main entry point."""
   if len(argv) > 1:
     raise app.UsageError(
