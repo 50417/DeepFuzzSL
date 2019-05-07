@@ -17,7 +17,7 @@ from absl import logging
 
 from compilers.llvm import clang_format
 from compilers.llvm import llvm
-from deeplearning.clgen import errors
+from clgen import errors
 from labm8 import bazelutil
 
 

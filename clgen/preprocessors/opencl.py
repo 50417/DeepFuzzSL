@@ -11,10 +11,10 @@ from labm8 import bazelutil
 
 FLAGS = flags.FLAGS
 
-LIBCLC = bazelutil.DataPath('phd/third_party/libclc/generic/include')
-OPENCL_H = bazelutil.DataPath('phd/deeplearning/clgen/data/include/opencl.h')
+LIBCLC = bazelutil.DataPath('third_party/libclc/generic/include')
+OPENCL_H = bazelutil.DataPath('clgen/data/include/opencl.h')
 SHIMFILE = bazelutil.DataPath(
-    'phd/deeplearning/clgen/data/include/opencl-shim.h')
+    'clgen/data/include/opencl-shim.h')
 
 
 def GetClangArgs(use_shim: bool) -> typing.List[str]:

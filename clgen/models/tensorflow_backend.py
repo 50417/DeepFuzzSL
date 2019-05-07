@@ -390,12 +390,17 @@ class TensorFlowBackend(backends.BackendBase):
     }
     [predictions, self.inference_state] = self.inference_sess.run(
         [self.probs, self.final_state], feed)
-   
+    
+    #This needs to be commented out to enable default random sample 
+   # self.inference_indices[:, 0] = [
+    #  WeightedPick(p, sampler.temperature) for p in predictions]
+
     self.inference_indices[:, 0] = [
-      WeightedPick(p, sampler.temperature) for p in predictions]
-
-
+      Weighted_topK_pick(p,5) for p in predictions]
+   
     return [i[0] for i in self.inference_indices]
+
+
 
   @property
   def is_trained(self) -> bool:
@@ -407,7 +412,19 @@ class TensorFlowBackend(backends.BackendBase):
     epoch_nums = [int(x.split('-')[-1]) for x in checkpoint_files]
     return self.config.training.num_epochs in epoch_nums
 
+# beam search
+def Weighted_topK_pick(prediction: np.ndarray, beam_width: int):
+  # walk over each step in sequence
 
+  prediction = np.log(np.asarray(prediction).astype('float64'))
+  prediction_exp = np.exp(prediction)
+  # Normalize the probabilities.
+  prediction = prediction_exp / np.sum(prediction_exp)
+  
+  top_k_indices = np.argpartition(prediction, -1*beam_width)[-1*beam_width:]
+  predictions = np.random.multinomial(2, prediction[top_k_indices], 1)
+  return top_k_indices[np.argmax(predictions)]
+    
 def WeightedPick(predictions: np.ndarray, temperature: float) -> np.ndarray:
   """Make a weighted choice from a predictions array."""
   predictions = np.log(np.asarray(predictions).astype('float64')) / temperature

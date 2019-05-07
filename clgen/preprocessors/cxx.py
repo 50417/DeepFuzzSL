@@ -6,10 +6,10 @@ from absl import flags
 
 from compilers.llvm import clang as clanglib
 from compilers.llvm import llvm
-from deeplearning.clgen import errors
-from deeplearning.clgen.preprocessors import clang
-from deeplearning.clgen.preprocessors import normalizer
-from deeplearning.clgen.preprocessors import public
+from clgen import errors
+from clgen.preprocessors import clang
+from clgen.preprocessors import normalizer
+from clgen.preprocessors import public
 from labm8 import bazelutil
 
 

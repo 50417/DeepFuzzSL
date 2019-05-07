@@ -7,14 +7,14 @@ import typing
 from absl import flags
 from absl import logging
 
-from deeplearning.clgen import errors
+from clgen import errors
 from labm8 import bazelutil
 
 
 FLAGS = flags.FLAGS
 
 CLGEN_REWRITER = bazelutil.DataPath(
-    'phd/deeplearning/clgen/preprocessors/clang_rewriter')
+    'clgen/preprocessors/clang_rewriter.cpp')
 assert CLGEN_REWRITER.is_file()
 
 # On Linux we must preload the LLVM sharded libraries.
