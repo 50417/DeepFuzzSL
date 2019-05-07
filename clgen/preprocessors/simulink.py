@@ -138,7 +138,7 @@ def RemoveUnnecessaryOnSimulink(text: str) -> str:
   lines = []
   count = 0
   for line in text.split("\n"):
-        removeList = ["Location","Open", "Points","ZOrder","Position", "SID", "ICPrevOutput", "LibraryVersion","SourceType","SourceProductName", "DelayOrder","ContentPreviewEnabled","SourceProductBaseCode","ICPrevScaledInput","OutDataTypeStr","InputProcessing", "OutputDataTypeScalingMode","InitialConditionSetting","PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
+        removeList = ["Location","Open", "Points","ZOrder","Position", "ICPrevOutput", "LibraryVersion","SourceType","SourceProductName", "DelayOrder","ContentPreviewEnabled","SourceProductBaseCode","ICPrevScaledInput","OutDataTypeStr","InputProcessing", "OutputDataTypeScalingMode","InitialConditionSetting","PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
         #removeList = ["Location","Open","ZOrder",     "PortBlocksUseCompactNotation", "ModelBrowserVisibility",  "ModelBrowserWidth",      "ScreenColor",        "PaperOrientation",    "PaperPositionMode",    "PaperType",        "PaperUnits",       "TiledPaperMargins",     "TiledPageScale",    "ShowPageBoundaries",  "ZoomFactor",       "ReportName"]  
         line = line.lstrip()
         if line.startswith(tuple(removeList)):
