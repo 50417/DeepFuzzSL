@@ -15,421 +15,443 @@ from clgen import telemetry
 from clgen.models import backends
 from clgen.models import data_generators
 from clgen.proto import model_pb2
-
+import sys
 
 FLAGS = flags.FLAGS
 
 
 class TensorFlowBackend(backends.BackendBase):
-  """A model with an embedding layer, using a keras backend."""
+	"""A model with an embedding layer, using a keras backend."""
 
-  def __init__(self, *args, **kwargs):
-    """Instantiate a model.
+	def __init__(self, *args, **kwargs):
+		"""Instantiate a model.
 
-    Args:
-      args: Arguments to be passed to BackendBase.__init__().
-      kwargs: Arguments to be passed to BackendBase.__init__().
-    """
-    super(TensorFlowBackend, self).__init__(*args, **kwargs)
+		Args:
+			args: Arguments to be passed to BackendBase.__init__().
+			kwargs: Arguments to be passed to BackendBase.__init__().
+		"""
+		super(TensorFlowBackend, self).__init__(*args, **kwargs)
 
-    # Attributes that will be lazily set.
-    self.cell = None
-    self.input_data = None
-    self.targets = None
-    self.initial_state = None
-    self.logits = None
-    self.probs = None
-    self.loss = None
-    self.final_state = None
-    self.learning_rate = None
-    self.epoch = None
-    self.train_op = None
+		# Attributes that will be lazily set.
+		self.cell = None
+		self.input_data = None
+		self.targets = None
+		self.initial_state = None
+		self.logits = None
+		self.probs = None
+		self.loss = None
+		self.final_state = None
+		self.learning_rate = None
+		self.epoch = None
+		self.train_op = None
 
-    self.inference_tf = None
-    self.inference_sess = None
-    self.inference_state = None
-    self.inference_indices = None
+		self.inference_tf = None
+		self.inference_sess = None
+		self.inference_state = None
+		self.inference_indices = None
 
-  def InitTfGraph(self, inference: bool) -> 'tf':
-    """Instantiate a TensorFlow graph for training or inference.
+	def InitTfGraph(self, inference: bool) -> 'tf':
+		"""Instantiate a TensorFlow graph for training or inference.
 
-    The tensorflow graph is different for training and inference, so must be
-    reset when switching between modes.
+		The tensorflow graph is different for training and inference, so must be
+		reset when switching between modes.
 
-    Args:
-      inference: If True, initialize model for inference. If False, initialize
-        model for training.
+		Args:
+			inference: If True, initialize model for inference. If False, initialize
+				model for training.
 
-    Returns:
-      The imported TensorFlow module.
-    """
-    start_time = time.time()
+		Returns:
+			The imported TensorFlow module.
+		"""
+		start_time = time.time()
 
-    # Quiet tensorflow.
-    # See: https://github.com/tensorflow/tensorflow/issues/1258
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+		# Quiet tensorflow.
+		# See: https://github.com/tensorflow/tensorflow/issues/1258
+		os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-    # Deferred importing of TensorFlow.
-    import tensorflow as tf
-    import tensorflow.contrib.legacy_seq2seq as seq2seq
-    from tensorflow.contrib import rnn
+		# Deferred importing of TensorFlow.
+		import tensorflow as tf
+		import tensorflow.contrib.legacy_seq2seq as seq2seq
+		from tensorflow.contrib import rnn
 
-    cell_type = {
-      model_pb2.NetworkArchitecture.LSTM: rnn.BasicLSTMCell,
-      model_pb2.NetworkArchitecture.GRU: rnn.GRUCell,
-      model_pb2.NetworkArchitecture.RNN: rnn.BasicRNNCell,
-    }.get(self.config.architecture.neuron_type, None)
-    if cell_type is None:
-      raise NotImplementedError
+		cell_type = {
+			model_pb2.NetworkArchitecture.LSTM: rnn.BasicLSTMCell,
+			model_pb2.NetworkArchitecture.GRU: rnn.GRUCell,
+			model_pb2.NetworkArchitecture.RNN: rnn.BasicRNNCell,
+		}.get(self.config.architecture.neuron_type, None)
+		if cell_type is None:
+			raise NotImplementedError
 
-    # Reset the graph when switching between training and inference.
-    tf.reset_default_graph()
+		# Reset the graph when switching between training and inference.
+		tf.reset_default_graph()
 
-    # Corpus attributes.
-    sequence_length = 1 if inference else self.config.training.sequence_length
-    vocab_size = self.atomizer.vocab_size
-    cell = cell_type(
-        self.config.architecture.neurons_per_layer, state_is_tuple=True)
-    self.cell = cell = rnn.MultiRNNCell(
-        [cell] * self.config.architecture.num_layers, state_is_tuple=True)
-    self.input_data = tf.placeholder(
-        tf.int32, [self.config.training.batch_size, sequence_length])
-    self.targets = tf.placeholder(
-        tf.int32, [self.config.training.batch_size, sequence_length])
-    self.initial_state = self.cell.zero_state(
-        self.config.training.batch_size, tf.float32)
+		# Corpus attributes.
+		sequence_length = 1 if inference else self.config.training.sequence_length
+		vocab_size = self.atomizer.vocab_size
+		cell = cell_type(
+				self.config.architecture.neurons_per_layer, state_is_tuple=True)
+		self.cell = cell = rnn.MultiRNNCell(
+				[cell] * self.config.architecture.num_layers, state_is_tuple=True)
+		self.input_data = tf.placeholder(
+				tf.int32, [self.config.training.batch_size, sequence_length])
+		self.targets = tf.placeholder(
+				tf.int32, [self.config.training.batch_size, sequence_length])
+		self.initial_state = self.cell.zero_state(
+				self.config.training.batch_size, tf.float32)
 
-    scope_name = 'rnnlm'
-    with tf.variable_scope(scope_name):
-      softmax_w = tf.get_variable(
-          'softmax_w', [self.config.architecture.neurons_per_layer, vocab_size])
-      softmax_b = tf.get_variable('softmax_b', [vocab_size])
+		scope_name = 'rnnlm'
+		with tf.variable_scope(scope_name):
+			softmax_w = tf.get_variable(
+					'softmax_w', [self.config.architecture.neurons_per_layer, vocab_size])
+			softmax_b = tf.get_variable('softmax_b', [vocab_size])
 
-      with tf.device('/cpu:0'):
-        embedding = tf.get_variable(
-            'embedding',
-            [vocab_size, self.config.architecture.neurons_per_layer])
-        inputs = tf.split(
-            axis=1, num_or_size_splits=sequence_length,
-            value=tf.nn.embedding_lookup(embedding, self.input_data))
-        inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
+			with tf.device('/cpu:0'):
+				embedding = tf.get_variable(
+						'embedding',
+						[vocab_size, self.config.architecture.neurons_per_layer])
+				inputs = tf.split(
+						axis=1, num_or_size_splits=sequence_length,
+						value=tf.nn.embedding_lookup(embedding, self.input_data))
+				inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
 
-    def InferenceLoop(prev, _):
-      prev = tf.matmul(prev, softmax_w) + softmax_b
-      prev_symbol = tf.stop_gradient(tf.argmax(prev, 1))
-      return tf.nn.embedding_lookup(embedding, prev_symbol)
+		def InferenceLoop(prev, _):
+			prev = tf.matmul(prev, softmax_w) + softmax_b
+			prev_symbol = tf.stop_gradient(tf.argmax(prev, 1))
+			return tf.nn.embedding_lookup(embedding, prev_symbol)
 
-    outputs, last_state = seq2seq.rnn_decoder(
-        inputs, self.initial_state, cell, scope=scope_name,
-        loop_function=InferenceLoop if inference else None)
-    output = tf.reshape(tf.concat(axis=1, values=outputs),
-                        [-1, self.config.architecture.neurons_per_layer])
-    self.logits = tf.matmul(output, softmax_w) + softmax_b
-    self.probs = tf.nn.softmax(self.logits)
-    sequence_loss = seq2seq.sequence_loss_by_example(
-        [self.logits],
-        [tf.reshape(self.targets, [-1])],
-        [tf.ones([self.config.training.batch_size * sequence_length])],
-        vocab_size)
-    self.loss = tf.reduce_sum(
-        sequence_loss) / self.config.training.batch_size / sequence_length
-    self.final_state = last_state
-    self.learning_rate = tf.Variable(0.0, trainable=False)
-    self.epoch = tf.Variable(0, trainable=False)
-    trainable_variables = tf.trainable_variables()
+		outputs, last_state = seq2seq.rnn_decoder(
+				inputs, self.initial_state, cell, scope=scope_name,
+				loop_function=InferenceLoop if inference else None)
+		output = tf.reshape(tf.concat(axis=1, values=outputs),
+												[-1, self.config.architecture.neurons_per_layer])
+		self.logits = tf.matmul(output, softmax_w) + softmax_b
+		self.probs = tf.nn.softmax(self.logits)
+		sequence_loss = seq2seq.sequence_loss_by_example(
+				[self.logits],
+				[tf.reshape(self.targets, [-1])],
+				[tf.ones([self.config.training.batch_size * sequence_length])],
+				vocab_size)
+		self.loss = tf.reduce_sum(
+				sequence_loss) / self.config.training.batch_size / sequence_length
+		self.final_state = last_state
+		self.learning_rate = tf.Variable(0.0, trainable=False)
+		self.epoch = tf.Variable(0, trainable=False)
+		trainable_variables = tf.trainable_variables()
 
-    # TODO(cec): Support non-adam optimizers.
-    grads, _ = tf.clip_by_global_norm(
-        # Argument of potential interest:
-        #   aggregation_method=tf.AggregationMethod.EXPERIMENTAL_TREE
-        #
-        # See:
-        #   https://www.tensorflow.org/api_docs/python/tf/gradients
-        #   https://www.tensorflow.org/api_docs/python/tf/AggregationMethod
-        tf.gradients(self.loss, trainable_variables),
-        self.config.training.adam_optimizer.normalized_gradient_clip_micros /
-        1e6)
-    optimizer = tf.train.AdamOptimizer(self.learning_rate)
-    self.train_op = optimizer.apply_gradients(zip(grads, trainable_variables))
+		# TODO(cec): Support non-adam optimizers.
+		grads, _ = tf.clip_by_global_norm(
+				# Argument of potential interest:
+				#   aggregation_method=tf.AggregationMethod.EXPERIMENTAL_TREE
+				#
+				# See:
+				#   https://www.tensorflow.org/api_docs/python/tf/gradients
+				#   https://www.tensorflow.org/api_docs/python/tf/AggregationMethod
+				tf.gradients(self.loss, trainable_variables),
+				self.config.training.adam_optimizer.normalized_gradient_clip_micros /
+				1e6)
+		optimizer = tf.train.AdamOptimizer(self.learning_rate)
+		self.train_op = optimizer.apply_gradients(zip(grads, trainable_variables))
 
-    num_trainable_params = int(np.sum(
-        [np.prod(v.shape) for v in tf.trainable_variables()]))
-    logging.info('Instantiated TensorFlow graph with %s trainable parameters '
-                 'in %s ms.', humanize.intcomma(num_trainable_params),
-                 humanize.intcomma(int((time.time() - start_time) * 1000)))
+		num_trainable_params = int(np.sum(
+				[np.prod(v.shape) for v in tf.trainable_variables()]))
+		logging.info('Instantiated TensorFlow graph with %s trainable parameters '
+								 'in %s ms.', humanize.intcomma(num_trainable_params),
+								 humanize.intcomma(int((time.time() - start_time) * 1000)))
 
-    return tf
+		return tf
 
-  @property
-  def epoch_checkpoints(self) -> typing.Set[int]:
-    """Get the set of epoch numbers which we have trained models for.
+	@property
+	def epoch_checkpoints(self) -> typing.Set[int]:
+		"""Get the set of epoch numbers which we have trained models for.
 
-    Note that Tensorflow checkpoint paths don't translate to actual files, but
-    rather a pair of <.index,.meta> files.
+		Note that Tensorflow checkpoint paths don't translate to actual files, but
+		rather a pair of <.index,.meta> files.
 
-    Returns:
-      A mapping of epoch numbers to paths.
-    """
-    if not (self.cache.path / 'checkpoints' / 'checkpoints'):
-      # No saver file means no checkpoints.
-      return {}
+		Returns:
+			A mapping of epoch numbers to paths.
+		"""
+		if not (self.cache.path / 'checkpoints' / 'checkpoints'):
+			# No saver file means no checkpoints.
+			return {}
 
-    # Count the number of checkpoint files which TensorFlow has created.
-    checkpoint_files = [
-      f.stem for f in (self.cache.path / 'checkpoints').iterdir()
-      if f.name.startswith('checkpoint-') and f.name.endswith('.meta')]
-    # The checkpoint paths are appended with the epoch number.
-    epoch_nums = [int(x.split('-')[-1]) for x in checkpoint_files]
-    return set(epoch_nums)
+		# Count the number of checkpoint files which TensorFlow has created.
+		checkpoint_files = [
+			f.stem for f in (self.cache.path / 'checkpoints').iterdir()
+			if f.name.startswith('checkpoint-') and f.name.endswith('.meta')]
+		# The checkpoint paths are appended with the epoch number.
+		epoch_nums = [int(x.split('-')[-1]) for x in checkpoint_files]
+		return set(epoch_nums)
 
-  def GetParamsPath(self, checkpoint_state) -> typing.Tuple[
-    typing.Optional[str], typing.List[str]]:
-    """Return path to checkpoint closest to target num of epochs."""
-    # Checkpoints are saved with relative path, so we must prepend cache paths.
-    paths = [str(self.cache.path / 'checkpoints' / p)
-             for p in checkpoint_state.all_model_checkpoint_paths]
-    # The checkpoint paths are appended with the epoch number.
-    epoch_nums = [int(x.split('-')[-1]) for x in paths]
-    diffs = [self.config.training.num_epochs - e for e in epoch_nums]
-    pairs = zip(paths, diffs)
-    positive_only = [p for p in pairs if p[1] >= 0]
-    return min(positive_only, key=lambda x: x[1])[0], paths
+	def GetParamsPath(self, checkpoint_state) -> typing.Tuple[
+		typing.Optional[str], typing.List[str]]:
+		"""Return path to checkpoint closest to target num of epochs."""
+		# Checkpoints are saved with relative path, so we must prepend cache paths.
+		paths = [str(self.cache.path / 'checkpoints' / p)
+						 for p in checkpoint_state.all_model_checkpoint_paths]
+		# The checkpoint paths are appended with the epoch number.
+		epoch_nums = [int(x.split('-')[-1]) for x in paths]
+		diffs = [self.config.training.num_epochs - e for e in epoch_nums]
+		pairs = zip(paths, diffs)
+		positive_only = [p for p in pairs if p[1] >= 0]
+		return min(positive_only, key=lambda x: x[1])[0], paths
 
-  def InferenceManifest(self) -> typing.List[pathlib.Path]:
-    """Return the list of files which are required for model inference.
+	def InferenceManifest(self) -> typing.List[pathlib.Path]:
+		"""Return the list of files which are required for model inference.
 
-    Returns:
-      A list of absolute paths.
-    """
-    # The TensorFlow save file.
-    paths = [
-      self.cache.path / 'checkpoints' / 'checkpoint',
-    ]
-    # Export only the TensorFlow checkpoint files for the target number of
-    # epochs.
-    paths += [
-      path.absolute() for path in
-      (self.cache.path / 'checkpoints').iterdir()
-      if path.name.startswith(
-          f'checkpoint-{self.config.training.num_epochs}')
-    ]
-    # Include the epoch telemetry. This is not strictly required, but the files
-    # are small and contain useful information for describing the model, such as
-    # the total training time and model loss.
-    paths += [
-      path.absolute() for path in
-      (self.cache.path / 'logs').iterdir()
-      if (path.name.startswith('epoch_') and
-          path.name.endswith('_telemetry.pbtxt'))
-    ]
-    return sorted(paths)
+		Returns:
+			A list of absolute paths.
+		"""
+		# The TensorFlow save file.
+		paths = [
+			self.cache.path / 'checkpoints' / 'checkpoint',
+		]
+		# Export only the TensorFlow checkpoint files for the target number of
+		# epochs.
+		paths += [
+			path.absolute() for path in
+			(self.cache.path / 'checkpoints').iterdir()
+			if path.name.startswith(
+					f'checkpoint-{self.config.training.num_epochs}')
+		]
+		# Include the epoch telemetry. This is not strictly required, but the files
+		# are small and contain useful information for describing the model, such as
+		# the total training time and model loss.
+		paths += [
+			path.absolute() for path in
+			(self.cache.path / 'logs').iterdir()
+			if (path.name.startswith('epoch_') and
+					path.name.endswith('_telemetry.pbtxt'))
+		]
+		return sorted(paths)
 
-  def Train(self, corpus) -> None:
-    """Locked training.
+	def Train(self, corpus) -> None:
+		"""Locked training.
 
-    If there are cached epoch checkpoints, the one closest to the target number
-    of epochs will be loaded, and the model will be trained for only the
-    remaining number of epochs, if any. This means that calling this function
-    twice will only actually train the model the first time, and all subsequent
-    calls will be no-ops.
+		If there are cached epoch checkpoints, the one closest to the target number
+		of epochs will be loaded, and the model will be trained for only the
+		remaining number of epochs, if any. This means that calling this function
+		twice will only actually train the model the first time, and all subsequent
+		calls will be no-ops.
 
-    This method must only be called when the model is locked.
-    """
-    if self.is_trained:
-      return
+		This method must only be called when the model is locked.
+		"""
+		if self.is_trained:
+			return
 
-    data_generator = data_generators.TensorflowBatchGenerator(
-        corpus, self.config.training)
-    tf = self.InitTfGraph(inference=False)
+		data_generator = data_generators.TensorflowBatchGenerator(
+				corpus, self.config.training)
+		tf = self.InitTfGraph(inference=False)
 
-    logger = telemetry.TrainingLogger(self.cache.path / 'logs')
+		logger = telemetry.TrainingLogger(self.cache.path / 'logs')
 
-    # training options
-    # TODO(cec): Enable support for multiple optimizers:
-    initial_learning_rate = (
-        self.config.training.adam_optimizer.initial_learning_rate_micros / 1e6)
-    decay_rate = (
-        self.config.training.adam_optimizer.learning_rate_decay_per_epoch_micros
-        / 1e6)
+		# training options
+		# TODO(cec): Enable support for multiple optimizers:
+		initial_learning_rate = (
+				self.config.training.adam_optimizer.initial_learning_rate_micros / 1e6)
+		decay_rate = (
+				self.config.training.adam_optimizer.learning_rate_decay_per_epoch_micros
+				/ 1e6)
 
-    # # resume from prior checkpoint
-    ckpt_path, ckpt_paths = None, None
-    if (self.cache.path / 'checkpoints' / 'checkpoint').exists():
-      checkpoint_state = tf.train.get_checkpoint_state(
-          self.cache.path / 'checkpoints')
-      assert checkpoint_state
-      assert checkpoint_state.model_checkpoint_path
-      ckpt_path, ckpt_paths = self.GetParamsPath(checkpoint_state)
-    
-    loss_ph =tf.placeholder(tf.float32, shape=[])
-    loss_summary = tf.summary.scalar('Loss_vs_Epoch',loss_ph)
-    lr_summary = tf.summary.scalar('learning_rate_vs_epoch',self.learning_rate)
-    with tf.Session() as sess:
-      # Merge all the summaries and write them out to
-      # cache path
-      merged = tf.summary.merge_all()
-      train_writer = tf.summary.FileWriter(str(self.cache.path / 'train'), sess.graph)
-      #test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
+		# # resume from prior checkpoint
+		ckpt_path, ckpt_paths = None, None
+		if (self.cache.path / 'checkpoints' / 'checkpoint').exists():
+			checkpoint_state = tf.train.get_checkpoint_state(
+					self.cache.path / 'checkpoints')
+			assert checkpoint_state
+			assert checkpoint_state.model_checkpoint_path
+			ckpt_path, ckpt_paths = self.GetParamsPath(checkpoint_state)
+		
+		loss_ph =tf.placeholder(tf.float32, shape=[])
+		loss_summary = tf.summary.scalar('Loss_vs_Epoch',loss_ph)
+		lr_summary = tf.summary.scalar('learning_rate_vs_epoch',self.learning_rate)
+		with tf.Session() as sess:
+			# Merge all the summaries and write them out to
+			# cache path
+			merged = tf.summary.merge_all()
+			train_writer = tf.summary.FileWriter(str(self.cache.path / 'train'), sess.graph)
+			#test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
 
-      tf.global_variables_initializer().run()
+			tf.global_variables_initializer().run()
 
-      # Keep all checkpoints.
-      saver = tf.train.Saver(tf.global_variables(), max_to_keep=100,
-                             save_relative_paths=True)
+			# Keep all checkpoints.
+			saver = tf.train.Saver(tf.global_variables(), max_to_keep=100,
+														 save_relative_paths=True)
 
-      # restore model from closest checkpoint.
-      if ckpt_path:
-        logging.info("Restoring checkpoint {}".format(ckpt_path))
-        saver.restore(sess, ckpt_path)
+			# restore model from closest checkpoint.
+			if ckpt_path:
+				logging.info("Restoring checkpoint {}".format(ckpt_path))
+				saver.restore(sess, ckpt_path)
 
-      # make sure we don't lose track of other checkpoints
-      if ckpt_paths:
-        saver.recover_last_checkpoints(ckpt_paths)
+			# make sure we don't lose track of other checkpoints
+			if ckpt_paths:
+				saver.recover_last_checkpoints(ckpt_paths)
 
-      # Per-epoch training loop.
-      for epoch_num in range(sess.run(self.epoch) + 1,
-                             self.config.training.num_epochs + 1):
-        logger.EpochBeginCallback()
+			# Per-epoch training loop.
+			for epoch_num in range(sess.run(self.epoch) + 1,
+														 self.config.training.num_epochs + 1):
+				logger.EpochBeginCallback()
 
-        # decay and set learning rate
-        new_learning_rate = initial_learning_rate * (
-            (float(100 - decay_rate) / 100.0) ** (epoch_num - 1))
-        sess.run(tf.assign(self.learning_rate, new_learning_rate))
-        sess.run(tf.assign(self.epoch, epoch_num))
-        # TODO(cec): refactor data generator to a Python generator.
-        data_generator.CreateBatches()
+				# decay and set learning rate
+				new_learning_rate = initial_learning_rate * (
+						(float(100 - decay_rate) / 100.0) ** (epoch_num - 1))
+				sess.run(tf.assign(self.learning_rate, new_learning_rate))
+				sess.run(tf.assign(self.epoch, epoch_num))
+				# TODO(cec): refactor data generator to a Python generator.
+				data_generator.CreateBatches()
 
-        logging.info('Epoch %d/%d:', epoch_num, self.config.training.num_epochs)
-        state = sess.run(self.initial_state)
-        # Per-batch inner loop.
-        bar = progressbar.ProgressBar(max_value=data_generator.num_batches)
-        for _ in bar(range(data_generator.num_batches)):
-          x, y = data_generator.NextBatch()
-          feed = {self.input_data: x, self.targets: y}
-          for i, (c, h) in enumerate(self.initial_state):
-            feed[c] = state[i].c
-            feed[h] = state[i].h
-          loss, state, _ = sess.run(
-              [self.loss, self.final_state, self.train_op], feed)
+				logging.info('Epoch %d/%d:', epoch_num, self.config.training.num_epochs)
+				state = sess.run(self.initial_state)
+				# Per-batch inner loop.
+				bar = progressbar.ProgressBar(max_value=data_generator.num_batches)
+				for _ in bar(range(data_generator.num_batches)):
+					x, y = data_generator.NextBatch()
+					feed = {self.input_data: x, self.targets: y}
+					for i, (c, h) in enumerate(self.initial_state):
+						feed[c] = state[i].c
+						feed[h] = state[i].h
+					loss, state, _ = sess.run(
+							[self.loss, self.final_state, self.train_op], feed)
 
-        summary = sess.run(merged,feed_dict={loss_ph:loss})
-        train_writer.add_summary(summary,epoch_num)
-        # Log the loss and delta.
-        logging.info('Loss: %.6f.', loss)
+				summary = sess.run(merged,feed_dict={loss_ph:loss})
+				train_writer.add_summary(summary,epoch_num)
+				# Log the loss and delta.
+				logging.info('Loss: %.6f.', loss)
 
-        # Save after every epoch.
-        start_time = time.time()
-        global_step = epoch_num
-        checkpoint_prefix = (self.cache.path / 'checkpoints' / 'checkpoint')
-        saver.save(sess, checkpoint_prefix, global_step=global_step)
-        checkpoint_path = f'{checkpoint_prefix}-{global_step}'
-        logging.info(
-            'Saved checkpoint %s in %s ms.',
-            checkpoint_path,
-            humanize.intcomma(int((time.time() - start_time) * 1000)))
-        assert pathlib.Path(
-            f'{checkpoint_prefix}-{global_step}.index').is_file()
-        assert pathlib.Path(f'{checkpoint_prefix}-{global_step}.meta').is_file()
+				# Save after every epoch.
+				start_time = time.time()
+				global_step = epoch_num
+				checkpoint_prefix = (self.cache.path / 'checkpoints' / 'checkpoint')
+				saver.save(sess, checkpoint_prefix, global_step=global_step)
+				checkpoint_path = f'{checkpoint_prefix}-{global_step}'
+				logging.info(
+						'Saved checkpoint %s in %s ms.',
+						checkpoint_path,
+						humanize.intcomma(int((time.time() - start_time) * 1000)))
+				assert pathlib.Path(
+						f'{checkpoint_prefix}-{global_step}.index').is_file()
+				assert pathlib.Path(f'{checkpoint_prefix}-{global_step}.meta').is_file()
 
-        logger.EpochEndCallback(epoch_num, loss)
+				logger.EpochEndCallback(epoch_num, loss)
 
-  def InitSampling(self, sampler: samplers.Sampler,
-                   seed: typing.Optional[int] = None) -> int:
-    """Initialize model for sampling."""
-    # Delete any previous sampling session.
-    if self.inference_tf:
-      del self.inference_tf
-    if self.inference_sess:
-      del self.inference_sess
-    print("Seed :"+str(seed))
-    # Seed the RNG.
-    if seed is not None:
-      np.random.seed(seed)
-      self.inference_tf.set_random_seed(seed)
+	def InitSampling(self, sampler: samplers.Sampler,
+									 seed: typing.Optional[int] = None) -> int:
+		"""Initialize model for sampling."""
+		# Delete any previous sampling session.
+		if self.inference_tf:
+			del self.inference_tf
+		if self.inference_sess:
+			del self.inference_sess
+		print("Seed :"+str(seed))
+		# Seed the RNG.
+		if seed is not None:
+			np.random.seed(seed)
+			self.inference_tf.set_random_seed(seed)
 
-    self.inference_tf = self.InitTfGraph(inference=True)
-    self.inference_sess = self.inference_tf.Session()
+		self.inference_tf = self.InitTfGraph(inference=True)
+		self.inference_sess = self.inference_tf.Session()
 
-    self.inference_tf.global_variables_initializer().run(
-        session=self.inference_sess)
-    # Restore trained model weights.
-    saver = self.inference_tf.train.Saver(self.inference_tf.global_variables())
-    checkpoint_state = self.inference_tf.train.get_checkpoint_state(
-        self.cache.path / 'checkpoints')
+		self.inference_tf.global_variables_initializer().run(
+				session=self.inference_sess)
+		# Restore trained model weights.
+		saver = self.inference_tf.train.Saver(self.inference_tf.global_variables())
+		checkpoint_state = self.inference_tf.train.get_checkpoint_state(
+				self.cache.path / 'checkpoints')
 
-    # These assertions will fail if the model has no checkpoints. Since this
-    # should only ever be called after Train(), there is no good reason for
-    # these assertions to fail.
-    assert checkpoint_state
-    assert checkpoint_state.model_checkpoint_path
+		# These assertions will fail if the model has no checkpoints. Since this
+		# should only ever be called after Train(), there is no good reason for
+		# these assertions to fail.
+		assert checkpoint_state
+		assert checkpoint_state.model_checkpoint_path
 
-    saver.restore(self.inference_sess, checkpoint_state.model_checkpoint_path)
+		saver.restore(self.inference_sess, checkpoint_state.model_checkpoint_path)
 
-    return self.config.training.batch_size
+		return self.config.training.batch_size
 
-  def InitSampleBatch(self, sampler: samplers.Sampler, batch_size: int) -> None:
-    self.inference_state = self.inference_sess.run(
-        self.cell.zero_state(batch_size, self.inference_tf.float32))
-    self.inference_indices = np.zeros((batch_size, 1))
+	def InitSampleBatch(self, sampler: samplers.Sampler, batch_size: int) -> None:
+		self.inference_state = self.inference_sess.run(
+				self.cell.zero_state(batch_size, self.inference_tf.float32))
+		self.inference_indices = np.zeros((batch_size, 1))
 
-    # Seed the model state with the starting text.
-    for symbol in sampler.encoded_start_text[:-1]:
-      self.inference_indices[:] = symbol
-      feed = {
-        self.input_data: self.inference_indices,
-        self.initial_state: self.inference_state
-      }
-      [self.inference_state] = self.inference_sess.run([self.final_state], feed)
-    self.inference_indices[:] = sampler.encoded_start_text[-1]
+		# Seed the model state with the starting text.
+		for symbol in sampler.encoded_start_text[:-1]:
+			self.inference_indices[:] = symbol
+			feed = {
+				self.input_data: self.inference_indices,
+				self.initial_state: self.inference_state
+			}
+			[self.inference_state] = self.inference_sess.run([self.final_state], feed)
+		self.inference_indices[:] = sampler.encoded_start_text[-1]
 
-  def SampleNextIndices(self, sampler: samplers.Sampler, batch_size: int):
-    # Sample distribution to pick next symbol.
-    feed = {
-      self.input_data: self.inference_indices,
-      self.initial_state: self.inference_state
-    }
-    [predictions, self.inference_state] = self.inference_sess.run(
-        [self.probs, self.final_state], feed)
-    
-    #This needs to be commented out to enable default random sample 
-   # self.inference_indices[:, 0] = [
-    #  WeightedPick(p, sampler.temperature) for p in predictions]
+	def SampleNextIndices(self, sampler: samplers.Sampler, batch_size: int):
+		# Sample distribution to pick next symbol.
+		feed = {
+			self.input_data: self.inference_indices,
+			self.initial_state: self.inference_state
+		}
+		[predictions, self.inference_state] = self.inference_sess.run(
+				[self.probs, self.final_state], feed)
+		
+		if(FLAGS.sampling_technique.split(" ")[0] == "topK"):
+			self.inference_indices[:, 0] = [
+				Weighted_topK_pick(p,sampler.temperature,int(FLAGS.sampling_technique.split(" ")[1])) for p in predictions]
+		elif (FLAGS.sampling_technique.split(" ")[0] == "nucleus" ):
+			self.inference_indices[:, 0] = [
+				Weighted_nucleus_Pick(p,sampler.temperature,float(FLAGS.sampling_technique.split(" ")[1])) for p in predictions]
+		elif (FLAGS.sampling_technique.split(" ")[0] =="beam"):
+			self.inference_indices[:, 0] = [
+				Weighted_topK_pick(p,FLAGS.sampling_technique.split(" ")[1]) for p in predictions]
+		else: 
+			self.inference_indices[:, 0] = [
+				WeightedPick(p, sampler.temperature) for p in predictions]   
+		return [i[0] for i in self.inference_indices]
 
-    self.inference_indices[:, 0] = [
-      Weighted_topK_pick(p,5) for p in predictions]
-   
-    return [i[0] for i in self.inference_indices]
 
 
+	@property
+	def is_trained(self) -> bool:
+		"""Determine if model has been trained."""
+		# Count the number of checkpoint files which TensorFlow has created.
+		checkpoint_files = [
+			f.stem for f in (self.cache.path / 'checkpoints').iterdir()
+			if f.name.startswith('checkpoint-') and f.name.endswith('.meta')]
+		epoch_nums = [int(x.split('-')[-1]) for x in checkpoint_files]
+		return self.config.training.num_epochs in epoch_nums
 
-  @property
-  def is_trained(self) -> bool:
-    """Determine if model has been trained."""
-    # Count the number of checkpoint files which TensorFlow has created.
-    checkpoint_files = [
-      f.stem for f in (self.cache.path / 'checkpoints').iterdir()
-      if f.name.startswith('checkpoint-') and f.name.endswith('.meta')]
-    epoch_nums = [int(x.split('-')[-1]) for x in checkpoint_files]
-    return self.config.training.num_epochs in epoch_nums
-
-# beam search
-def Weighted_topK_pick(prediction: np.ndarray, beam_width: int):
-  # walk over each step in sequence
-
-  prediction = np.log(np.asarray(prediction).astype('float64'))
-  prediction_exp = np.exp(prediction)
-  # Normalize the probabilities.
-  prediction = prediction_exp / np.sum(prediction_exp)
-  
-  top_k_indices = np.argpartition(prediction, -1*beam_width)[-1*beam_width:]
-  predictions = np.random.multinomial(2, prediction[top_k_indices], 1)
-  return top_k_indices[np.argmax(predictions)]
-    
+# Top K Sampling
+def Weighted_topK_pick(prediction: np.ndarray, temperature: float, k: int):
+	#Prediction based on the top - K probabilities of the next tokens 
+	prediction = np.log(np.asarray(prediction).astype('float64')) / temperature
+	prediction_exp = np.exp(prediction)
+	# Normalize the probabilities.
+	prediction = prediction_exp / np.sum(prediction_exp)
+	
+	top_k_indices = np.argpartition(prediction, -1*k)[-1*k:] # returns an array of indices of a sorted array 
+	predictions = np.random.multinomial(1, prediction[top_k_indices], 1) #Returns numbers of times the token is selected by doing a random multinomial experiment
+	return top_k_indices[np.argmax(predictions)]
+		
 def WeightedPick(predictions: np.ndarray, temperature: float) -> np.ndarray:
-  """Make a weighted choice from a predictions array."""
-  predictions = np.log(np.asarray(predictions).astype('float64')) / temperature
-  predictions_exp = np.exp(predictions)
-  # Normalize the probabilities.
-  predictions = predictions_exp / np.sum(predictions_exp)
-  predictions = np.random.multinomial(1, predictions, 1)
-  return np.argmax(predictions)
+	"""Make a weighted choice from a predictions array."""
+	predictions = np.log(np.asarray(predictions).astype('float64')) / temperature
+	predictions_exp = np.exp(predictions)
+	# Normalize the probabilities.
+	predictions = predictions_exp / np.sum(predictions_exp)
+	predictions = np.random.multinomial(1, predictions, 1)
+	return np.argmax(predictions)
+
+def Weighted_nucleus_Pick(predictions: np.ndarray, temperature: float, p: float) -> np.ndarray:
+	"""#Prediction based on the nucleus  sampling_technique for next tokens 
+		suggested p value :>.9
+	"""
+	predictions = np.log(np.asarray(predictions).astype('float64')) / temperature
+	predictions_exp = np.exp(predictions)
+	# Normalize the probabilities.
+	predictions = predictions_exp / np.sum(predictions_exp)
+
+	sorted_indices = np.argsort(predictions)  
+	reverse_sorted_indices= sorted_indices[::-1] #Descending order fastest way
+	cum_sum=np.cumsum(predictions[reverse_sorted_indices]) #Cumulative sum of descending array 
+	top_p_indices=reverse_sorted_indices[:len(cum_sum[cum_sum<p])]	#Retain only the array indices whose cumulative value is less than threshold value p
+	predictions = np.random.multinomial(1, predictions[top_p_indices], 1)
+	if(predictions.size==0):
+		return reverse_sorted_indices[0] #Returns the most probably index since the threshold is too small and array is empty
+	return top_p_indices[np.argmax(predictions)]

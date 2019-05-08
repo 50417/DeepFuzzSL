@@ -80,6 +80,15 @@ flags.DEFINE_bool(
 flags.DEFINE_bool(
     'visualize', False,
     'Enable Loss vs Epoch Visualization while training')
+'''
+Example: --sampling_technique "topK 3"
+--sampling_technique "nucleus 3"
+--sampling_technique "beam 3"
+'''
+flags.DEFINE_string(
+    'sampling_technique', "default",
+    ' Valid options are: "topK K-value" or "nucleus P-value" or "beam beamwidthvalue"  or "default".') 
+
 class Instance(object):
   """A CLgen instance."""
 

@@ -86,6 +86,10 @@ class PreTrainedModel(object):
 		samples=[]
 		sample_dir = self.SamplerCache(sampler)
 		print("batch Size : "+str(batch_size))
+		if(FLAGS.sampling_technique.split(" ")[0]  in ["topK", "nucleus" ,"beam", "default"]):
+			logging.info('Sampling technique set to :  %s with value : %s ', FLAGS.sampling_technique.split(" ")[0] ,FLAGS.sampling_technique.split(" ")[1] )
+		else:
+			logging.info('Sampling technique set to :  default')
 
 		# Per-sample batch outer loop. Continues until we have as many samples
 		# as we want.
