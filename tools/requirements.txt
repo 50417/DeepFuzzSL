@@ -12,7 +12,7 @@ autoenv==1.0.0
 backports-abc==0.5
 backports.functools-lru-cache==1.5
 backports.shutil-get-terminal-size==1.0.0
-bleach==1.5.0
+bleach==3.1.2
 bokeh==1.0.2
 certifi==2018.4.16
 cffi==1.11.5
