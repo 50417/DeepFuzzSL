@@ -112,7 +112,7 @@ pycparserext==2016.2
 # Interface for graphviz. See: https://github.com/pydot/pydot
 pydot==1.4.1
 PyGithub==1.39
-Pygments==2.2.0
+Pygments==2.7.4
 pylint==1.8.2
 pyopencl==2016.2
 pyparsing==2.2.0
