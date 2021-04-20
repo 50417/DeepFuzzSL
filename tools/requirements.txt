@@ -94,7 +94,7 @@ psutil==5.4.5
 psycopg2-binary==2.7.4
 ptyprocess==0.5.2
 py-cpuinfo==3.3.0
-py==1.5.2
+py==1.10.0
 # At the time of writing (2018-05-10), the most recent version of pycparser is
 # version 2.18, however, it breaks cldrive with error:
 #   Traceback (most recent call last):
