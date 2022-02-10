@@ -7,4 +7,4 @@ numpy==1.14.3
 progressbar2==3.37.1 #his is reqruied
 Send2Trash==1.5.0 # this is required
 SQLAlchemy==1.2.4 #This is required
-tensorflow==1.8.0
+tensorflow==2.5.3
