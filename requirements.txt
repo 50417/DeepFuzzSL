@@ -3,7 +3,7 @@ checksumdir==1.0.5 #this is required
 humanize==0.5.1
 grpcio-tools==1.15.0 # this is required
 grpcio==1.15.0 #this is required
-numpy==1.14.3
+numpy==1.22.0
 progressbar2==3.37.1 #his is reqruied
 Send2Trash==1.5.0 # this is required
 SQLAlchemy==1.2.4 #This is required
