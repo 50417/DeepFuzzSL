@@ -89,7 +89,7 @@ ply==3.11
 prettytable==0.7.2
 progressbar2==3.37.1
 prompt-toolkit==1.0.15
-protobuf==3.6.1
+protobuf==3.18.3
 psutil==5.4.5
 psycopg2-binary==2.7.4
 ptyprocess==0.5.2
